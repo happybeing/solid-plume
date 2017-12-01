@@ -5,8 +5,14 @@ var Plume = Plume || {};
 Plume = (function () {
     'use strict';
 
+    var xsd = $rdf.Namespace('http://www.w3.org/2001/XMLSchema#')
+
     var config = Plume.config || {};
     var appURL = window.location.origin+window.location.pathname;
+
+    // TODO remove or comment out for http deployment
+    // Enable testing (disables login and WebID auth)
+    const testWebID = 'https://localhost:8443/profile/card#me'
 
     // RDF
     var PROXY = "https://databox.me/,proxy?uri={uri}";
@@ -224,6 +230,14 @@ Plume = (function () {
 
     // Log user in
     var login = function() {
+
+        // For local testing
+        if (testWebID){
+          gotWebID(testWebID)
+          notify('error', "Authentication disabled - using localhost WebID");
+          return
+        }
+
         // Get the current user
         Solid.auth.login().then(function(webid){
             gotWebID(webid);
@@ -616,28 +630,35 @@ Plume = (function () {
     // save post data to server
     var savePost = function(post, url) {
         //TODO also write tags - use sioc:topic -> uri
-        var g = new $rdf.graph();
-        g.add($rdf.sym(''), RDF('type'), SIOC('Post'));
-        g.add($rdf.sym(''), DCT('title'), $rdf.lit(post.title));
-        g.add($rdf.sym(''), SIOC('has_creator'), $rdf.sym('#author'));
-        g.add($rdf.sym(''), DCT('created'), $rdf.lit(post.created, '', $rdf.Symbol.prototype.XSDdateTime));
-        g.add($rdf.sym(''), DCT('modified'), $rdf.lit(post.modified, '', $rdf.Symbol.prototype.XSDdateTime));
-        g.add($rdf.sym(''), SIOC('content'), $rdf.lit(encodeHTML(post.body)));
 
-        g.add($rdf.sym('#author'), RDF('type'), SIOC('UserAccount'));
-        g.add($rdf.sym('#author'), SIOC('account_of'), $rdf.sym(post.author));
-        g.add($rdf.sym('#author'), FOAF('name'), $rdf.lit(authors[post.author].name));
-        g.add($rdf.sym('#author'), SIOC('avatar'), $rdf.sym(authors[post.author].picture));
+        var slug = makeSlug(post.title);
+        if (!url){
+          // Prefix to prevent overwriting existing post with same title
+          var docURI = config.postsURL + Date.now() + '-' + slug;
+        }
+        else
+          docURI = url;
+
+        var authURI = docURI + '#author';
+
+        var g = new $rdf.graph();
+        g.add($rdf.sym(docURI), RDF('type'), SIOC('Post'));
+        g.add($rdf.sym(docURI), DCT('title'), $rdf.lit(post.title));
+        g.add($rdf.sym(docURI), SIOC('has_creator'), $rdf.sym(authURI));
+        g.add($rdf.sym(docURI), DCT('created'), $rdf.lit(post.created, '', xsd('dateTime')));
+        g.add($rdf.sym(docURI), DCT('modified'), $rdf.lit(post.modified, '', xsd('dateTime')));
+        g.add($rdf.sym(docURI), SIOC('content'), $rdf.lit(encodeHTML(post.body)));
+        g.add($rdf.sym(authURI), RDF('type'), SIOC('UserAccount'));
+        g.add($rdf.sym(authURI), SIOC('account_of'), $rdf.sym(post.author));
+        g.add($rdf.sym(authURI), FOAF('name'), $rdf.lit(authors[post.author].name));
+
+        if (authors[post.author].picture)
+          g.add($rdf.sym(authURI), SIOC('avatar'), $rdf.sym(authors[post.author].picture));
 
         var triples = new $rdf.Serializer(g).toN3(g);
 
-        if (url) {
-            var writer = Solid.web.put(url, triples);
-        } else {
-            var slug = makeSlug(post.title);
-            var writer = Solid.web.post(config.postsURL, slug, triples);
-        }
-        writer.then(
+        Solid.web.put(docURI, triples)
+        .then(
             function(res) {
                 // all done, clean up and go to initial state
                 if (res.url.slice(0,4) !== 'http') {
@@ -1551,4 +1572,3 @@ Plume.menu = (function() {
     }
 })();
 Plume.menu.init();
-
