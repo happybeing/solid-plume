@@ -37,8 +37,9 @@ Solid.auth = (function(window) {
     'use strict';
 
    // default (preferred) authentication endpoint
-    var authEndpoint = 'https://databox.me/';
-    var signupEndpoint = 'https://solid.github.io/solid-idps/';
+   var authEndpoint = 'https://localhost:8443/';
+   //var authEndpoint = 'https://databox.me/';
+   var signupEndpoint = 'https://solid.github.io/solid-idps/';
 
     // attempt to find the current user's WebID from the User header if authenticated
     // resolve(webid) - string
