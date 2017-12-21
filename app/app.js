@@ -1471,16 +1471,25 @@ Plume = (function () {
     // ----- INIT -----
     // start app by loading the config file
     applyConfig();
-    var http = new XMLHttpRequest();
-    http.open('get', 'config.json');
-    http.onreadystatechange = function() {
-        if (this.readyState == this.DONE) {
-            init(JSON.parse(this.response));
-        }
-    };
-    http.send();
+    // var http = new XMLHttpRequest();
+    // http.open('get', 'config.json');
+    // http.onreadystatechange = function() {
+    //     if (this.readyState == this.DONE) {
+    //         init(JSON.parse(this.response));
+    //     }
+    // };
+    // http.send();
 
+    // ====== ALTERNATIVE... using Fetcher
+    // start app by loading the config file
+    var f = new $rdf.fetcher(new $rdf.graph());
 
+    let url = document.URL
+    let configURI = url.substring(0, url.lastIndexOf("/")) + '/config.json'
+    f.fetch(configURI,{method:'GET'}).then((response) => {
+      if (response.ok)
+        response.text().then((text) => { init(JSON.parse(text)) });
+    });
 
     // return public functions
     return {

@@ -31,6 +31,8 @@ https://github.com/solid/
 
 */
 
+// TODO strip out functions with OLD_ prefix
+
 // WebID authentication and signup
 var Solid = Solid || {};
 Solid.auth = (function(window) {
@@ -354,8 +356,8 @@ Solid.web = (function(window) {
     // common vocabs
     var LDP = $rdf.Namespace("http://www.w3.org/ns/ldp#");
 
-    // return metadata for a given request
-    var parseResponseMeta = function(resp) {
+    // return metadata for a given request (XMLHttpRequest style resp)
+    var OLD_parseResponseMeta = function(resp) {
         var h = Solid.utils.parseLinkHeader(resp.getResponseHeader('Link'));
         var meta = {};
         meta.url = (resp.getResponseHeader('Location'))?resp.getResponseHeader('Location'):resp.responseURL;
@@ -369,10 +371,25 @@ Solid.web = (function(window) {
         return meta;
     };
 
+    // return metadata for a given request (fetch style resp)
+    var parseResponseMeta = function(resp) {
+        var h = Solid.utils.parseLinkHeader(resp.headers.get('Link'));
+        var meta = {};
+        meta.url = (resp.headers.get('Location'))?resp.headers.get('Location'):resp.url;
+        meta.acl = h['acl'];
+        meta.meta = (h['meta'])?h['meta']:h['describedBy'];
+        meta.user = (resp.headers.get('User'))?resp.headers.get('User'):'';
+        meta.websocket = (resp.headers.get('Updates-Via'))?resp.headers.get('Updates-Via'):'';
+        meta.exists = false;
+        meta.exists = (resp.status === 200)?true:false;
+        meta.response = resp;
+        return meta;
+    };
+
     // check if a resource exists and return useful Solid info (acl, meta, type, etc)
     // resolve(metaObj)
     var head = function(url) {
-        var promise = new Promise(function(resolve) {
+/*        var promise = new Promise(function(resolve) {
             var http = new XMLHttpRequest();
             http.open('HEAD', url);
             http.onreadystatechange = function() {
@@ -384,6 +401,14 @@ Solid.web = (function(window) {
         });
 
         return promise;
+        */
+        var f = new $rdf.fetcher(new $rdf.graph());
+        return f.fetch(url,{method:'HEAD'}).then((response) => {
+          console.log('HEAD response: %O',response)
+          if (response.ok)
+            parseResponseMeta(response)
+//            response.text().then((text) => { init(JSON.parse(text)) });
+        });
     };
 
     // fetch an RDF resource
@@ -408,7 +433,7 @@ Solid.web = (function(window) {
 
     // create new resource
     // resolve(metaObj) | reject
-    var post = function(url, slug, data, isContainer) {
+    var OLD_post = function(url, slug, data, isContainer) {
         var resType = (isContainer)?LDP('BasicContainer').uri:LDP('Resource').uri;
         var promise = new Promise(function(resolve, reject) {
             var http = new XMLHttpRequest();
@@ -438,9 +463,30 @@ Solid.web = (function(window) {
         return promise;
     };
 
+    // create new resource
+    // resolve(metaObj) | reject
+    var post = function(url, slug, data, isContainer) {
+        var resType = (isContainer)?LDP('BasicContainer').uri:LDP('Resource').uri;
+
+        let postHeaders = new Headers({
+          'Content-Type': 'text/turtle',
+          'Link':         '<'+resType+'>; rel="type"',
+        });
+        if (slug && slug.length > 0)
+            postHeaders.append('Slug', slug);
+
+        var f = new $rdf.fetcher(new $rdf.graph());
+        return f.fetch(url,{method:'POST', body: (data && data.length > 0?data:''), headers: postHeaders}).then((response) => {
+          console.log('POST response: %O',response)
+          if (response.status === 200 || response.status === 201) {
+            return parseResponseMeta(response);
+          }
+        });
+      }
+
     // update/create resource using HTTP PUT
     // resolve(metaObj) | reject
-    var put = function(url, data) {
+    var OLD_put = function(url, data) {
         var promise = new Promise(function(resolve, reject) {
             var http = new XMLHttpRequest();
             http.open('PUT', url);
@@ -465,9 +511,23 @@ Solid.web = (function(window) {
         return promise;
     };
 
+    var put = function(url, data) {
+      let putHeaders = new Headers({
+        'Content-Type': 'text/turtle',
+      });
+
+      var f = new $rdf.fetcher(new $rdf.graph());
+      return f.fetch(url,{method:'PUT', body: (data?data:''), headers: putHeaders}).then((response) => {
+        console.log('PUT response: %O',response)
+        if (response.status === 200 || response.status === 201) {
+          return parseResponseMeta(response);
+        }
+      });
+    };
+
     // delete a resource
     // resolve(true) | reject
-    var del = function(url) {
+    var OLD_del = function(url) {
         var promise = new Promise(function(resolve, reject) {
             var http = new XMLHttpRequest();
             http.open('DELETE', url);
@@ -485,6 +545,19 @@ Solid.web = (function(window) {
         });
 
         return promise;
+    };
+
+
+    // delete a resource
+    // resolve(true) | reject
+    var del = function(url) {
+      var f = new $rdf.fetcher(new $rdf.graph());
+      return f.fetch(url,{method:'DELETE', headers: new Headers}).then((response) => {
+        console.log('DELETE response: %O',response)
+        if (response.status === 200 ) {
+          return true;
+        }
+      });
     }
 
     // return public methods
