@@ -33,6 +33,14 @@ https://github.com/solid/
 
 // TODO strip out functions with OLD_ prefix
 
+// One Safenetwork object
+// THIS WORKS:
+// SafenetworkLDP.protoFetch('safe://localhost:8443',{method:'GET'})
+// THIS FAILS:
+ SafenetworkLDP.Configure()
+ 
+const fetch = SafenetworkLDP.protoFetch  //TODO ??? .bind(Safenetwork)
+
 // WebID authentication and signup
 var Solid = Solid || {};
 Solid.auth = (function(window) {
@@ -402,8 +410,8 @@ Solid.web = (function(window) {
 
         return promise;
         */
-        var f = new $rdf.fetcher(new $rdf.graph());
-        return f.fetch(url,{method:'HEAD'}).then((response) => {
+        //TODO var f = new $rdf.fetcher(new $rdf.graph());
+        return fetch(url,{method:'HEAD'}).then((response) => {
           console.log('HEAD response: %O',response)
           if (response.ok)
             parseResponseMeta(response)
@@ -475,8 +483,8 @@ Solid.web = (function(window) {
         if (slug && slug.length > 0)
             postHeaders.append('Slug', slug);
 
-        var f = new $rdf.fetcher(new $rdf.graph());
-        return f.fetch(url,{method:'POST', body: (data && data.length > 0?data:''), headers: postHeaders}).then((response) => {
+        //TODO var f = new $rdf.fetcher(new $rdf.graph());
+        return fetch(url,{method:'POST', body: (data && data.length > 0?data:''), headers: postHeaders}).then((response) => {
           console.log('POST response: %O',response)
           if (response.status === 200 || response.status === 201) {
             return parseResponseMeta(response);
@@ -516,8 +524,8 @@ Solid.web = (function(window) {
         'Content-Type': 'text/turtle',
       });
 
-      var f = new $rdf.fetcher(new $rdf.graph());
-      return f.fetch(url,{method:'PUT', body: (data?data:''), headers: putHeaders}).then((response) => {
+      //TODO var f = new $rdf.fetcher(new $rdf.graph());
+      return fetch(url,{method:'PUT', body: (data?data:''), headers: putHeaders}).then((response) => {
         console.log('PUT response: %O',response)
         if (response.status === 200 || response.status === 201) {
           return parseResponseMeta(response);
@@ -551,8 +559,8 @@ Solid.web = (function(window) {
     // delete a resource
     // resolve(true) | reject
     var del = function(url) {
-      var f = new $rdf.fetcher(new $rdf.graph());
-      return f.fetch(url,{method:'DELETE', headers: new Headers}).then((response) => {
+      //TODO var f = new $rdf.fetcher(new $rdf.graph());
+      return fetch(url,{method:'DELETE', headers: new Headers}).then((response) => {
         console.log('DELETE response: %O',response)
         if (response.status === 200 ) {
           return true;

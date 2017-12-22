@@ -1,5 +1,27 @@
 /* ---- DON'T EDIT BELOW ---- */
 
+// SAFE network app configuration
+// Example solidConfig TODO: is this needed? - maybe use just for PoC / testing?
+const solidCfg = {
+    webid:    'safe://solid.happybeing/profile/card#me', // Public readable resource
+    storage:  'safe://solid.happybeing'                 // Public read/write solid service
+}
+
+// Example Configure() config. Supplied by App to identify it in the SAFE Auth UI
+const appCfg = {
+  id:     'com.happybeing',
+  name:   'Solid Plume (Testing)',
+  vendor: 'happybeing SAFE ;-)'
+}
+
+// Default SAFE Auth permissions to request. Optional parameter to Configure()
+const defaultPerms = {
+  // TODO is this right for solid service container (ie solid.<safepublicid>)
+  _public: ['Insert'],         // request to insert into `_public` container
+  _other: ['Insert', 'Update'] // request to insert and update in `_other` container
+}
+
+
 var Plume = Plume || {};
 
 Plume = (function () {
@@ -80,6 +102,9 @@ Plume = (function () {
     var posts = {};
     var authors = {};
     var webSockets = {};
+
+    //TODO read config from config.json???
+//    SafenetworkLDP.Configure($rdf,solidCfg,appCfg,defaultPerms)
 
     // Initializer
     var init = function(configData) {
@@ -1480,13 +1505,13 @@ Plume = (function () {
     // };
     // http.send();
 
-    // ====== ALTERNATIVE... using Fetcher
+    // ====== ALTERNATIVE (to support safe: URI protocol)
     // start app by loading the config file
-    var f = new $rdf.fetcher(new $rdf.graph());
+    // TODO remove: var f = new $rdf.fetcher(new $rdf.graph());
 
     let url = document.URL
     let configURI = url.substring(0, url.lastIndexOf("/")) + '/config.json'
-    f.fetch(configURI,{method:'GET'}).then((response) => {
+    fetch(configURI,{method:'GET'}).then((response) => {
       if (response.ok)
         response.text().then((text) => { init(JSON.parse(text)) });
     });
