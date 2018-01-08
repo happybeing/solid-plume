@@ -18,7 +18,7 @@ const appCfg = {
 const defaultPerms = {
   // TODO is this right for solid service container (ie solid.<safepublicid>)
   _public: ['Insert'],         // request to insert into `_public` container
-  _other: ['Insert', 'Update'] // request to insert and update in `_other` container
+//  _other: ['Insert', 'Update'] // request to insert and update in `_other` container
 }
 
 
@@ -104,7 +104,11 @@ Plume = (function () {
     var webSockets = {};
 
     //TODO read config from config.json???
-//    SafenetworkLDP.Configure($rdf,solidCfg,appCfg,defaultPerms)
+
+    // TODO for development, use local solid-safenetwork.js:
+    SafenetworkLDP.Configure($rdf,solidCfg,appCfg,defaultPerms)
+    // TODO to use solid-safenetwork.js from rdflib, uncomment this:
+    //$rdf.SafenetworkLDP.Configure(null,solidCfg,appCfg,defaultPerms)
 
     // Initializer
     var init = function(configData) {
@@ -1505,9 +1509,10 @@ Plume = (function () {
     // };
     // http.send();
 
+
     // ====== ALTERNATIVE (to support safe: URI protocol)
     // start app by loading the config file
-    // TODO remove: var f = new $rdf.fetcher(new $rdf.graph());
+/* Figure out how to handle config to support: blog owner, blog visitor
 
     let url = document.URL
     let configURI = url.substring(0, url.lastIndexOf("/")) + '/config.json'
@@ -1515,7 +1520,7 @@ Plume = (function () {
       if (response.ok)
         response.text().then((text) => { init(JSON.parse(text)) });
     });
-
+*/
     // return public functions
     return {
         notify: notify,

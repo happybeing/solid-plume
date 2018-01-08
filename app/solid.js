@@ -37,9 +37,14 @@ https://github.com/solid/
 // THIS WORKS:
 // SafenetworkLDP.protoFetch('safe://localhost:8443',{method:'GET'})
 // THIS FAILS:
- SafenetworkLDP.Configure()
- 
-const fetch = SafenetworkLDP.protoFetch  //TODO ??? .bind(Safenetwork)
+//SafenetworkLDP.Configure()
+
+var Safenetwork = $rdf.SafenetworkLDP
+// TODO remove: For development, use local js/solid-safenetwork.js object:
+var Safenetwork = new SafenetworkLDP(true)
+
+const fetch = SafenetworkLDP.protoFetch.bind(Safenetwork)
+
 
 // WebID authentication and signup
 var Solid = Solid || {};
