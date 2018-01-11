@@ -1,5 +1,8 @@
 /* ---- DON'T EDIT BELOW ---- */
 
+// Hard coded for proof-of-concept
+const pocWebUri = 'safe://solidpoc5/'   // URI for solid-plume PoC on SAFEnetwork
+
 // SAFE network app configuration
 // Example solidConfig TODO: is this needed? - maybe use just for PoC / testing?
 const solidCfg = {
@@ -17,7 +20,7 @@ const appCfg = {
 // Default SAFE Auth permissions to request. Optional parameter to Configure()
 const defaultPerms = {
   // TODO is this right for solid service container (ie solid.<safepublicid>)
-  _public: ['Insert'],         // request to insert into `_public` container
+  _public: ['Read', 'Insert', 'Update', 'Delete'],         // request to insert into `_public` container
 //  _other: ['Insert', 'Update'] // request to insert and update in `_other` container
 }
 
@@ -34,7 +37,9 @@ Plume = (function () {
 
     // TODO remove or comment out for http deployment
     // Enable testing (disables login and WebID auth)
-    const testWebID = 'https://localhost:8443/profile/card#me'
+    // Note: to Create/Edit, this must match an entry in config.owners
+    var testWebID = 'https://localhost:8443/profile/card#me'  // localhost server
+    testWebID = 'safe://solidpoc5/card#me'               // SAFEnetwork
 
     // RDF
     var PROXY = "https://databox.me/,proxy?uri={uri}";
@@ -103,9 +108,11 @@ Plume = (function () {
     var authors = {};
     var webSockets = {};
 
-    //TODO read config from config.json???
+    //TODO on login read config (from where?)
+    //TODO see also what's in config.json
 
-    // TODO for development, use local solid-safenetwork.js:
+    //TODO review: development uses hard coded config...
+    // Auth on SAFE using application config
     SafenetworkLDP.Configure($rdf,solidCfg,appCfg,defaultPerms)
     // TODO to use solid-safenetwork.js from rdflib, uncomment this:
     //$rdf.SafenetworkLDP.Configure(null,solidCfg,appCfg,defaultPerms)
@@ -300,28 +307,50 @@ Plume = (function () {
         user.webid = webid;
         user.authenticated = true;
         hideLogin();
-        // fetch and set user profile
-        Solid.identity.getProfile(webid).then(function(g) {
-            var profile = getUserProfile(webid, g);
-            user.name = profile.name;
-            user.picture = profile.picture;
-            user.date = Date.now();
-            // add self to authors list
-            authors[webid] = user;
-            saveLocalAuthors();
-            // add workspaces
-            Solid.identity.getWorkspaces(webid, g).then(function(ws){
-                user.workspaces = ws;
-                // save to local storage and refresh page
-                saveLocalStorage();
-                window.location.reload();
-            }).catch(function(err) {
-                showError(err);
-                // save to local storage and refresh page
-                saveLocalStorage();
-                window.location.reload();
-            });
-        });
+        if (true){
+          // Hard code profile for proof-of-concept
+          user.name = 'happybeing'        //profile.name;
+          user.picture = pocWebUri + 'mugshot.jpg';
+          user.date = Date.now();
+          authors[webid] = user;
+          saveLocalAuthors();
+
+          // Hard code workspaces for proof-of-concept
+          let ws = []
+          let prefsWs = {title: 'preferencesFile', url: '/settings/prefs.ttl'}
+          let storeWs = {title: 'storage', url: '/'}
+          ws.push(prefsWs)
+          ws.push(storeWs)
+
+          user.workspaces = ws;
+          // save to local storage and refresh page
+          saveLocalStorage();
+          window.location.reload();
+        }
+        else{ // TODO reinstate when SAFE supports profiles
+          // fetch and set user profile
+          Solid.identity.getProfile(webid).then(function(g) {
+              var profile = getUserProfile(webid, g);
+              user.name = profile.name;
+              user.picture = profile.picture;
+              user.date = Date.now();
+              // add self to authors list
+              authors[webid] = user;
+              saveLocalAuthors();
+              // add workspaces
+              Solid.identity.getWorkspaces(webid, g).then(function(ws){
+                  user.workspaces = ws;
+                  // save to local storage and refresh page
+                  saveLocalStorage();
+                  window.location.reload();
+              }).catch(function(err) {
+                  showError(err);
+                  // save to local storage and refresh page
+                  saveLocalStorage();
+                  window.location.reload();
+              });
+          });
+        }
     };
 
     // get profile data for a given user
@@ -1496,10 +1525,23 @@ Plume = (function () {
     };
 
 
+    // TODO Hard coded config for PoC:
+    let hardConfig = {
+        "owners": ["https://localhost:8443/profile/card#me","safe://solidpoc5/card#me"],
+        "title": "SAFE Plume Blog",
+        "tagline": "Safe as houses, light as a feather",
+        "picture": "safe-quill.png",
+        "fadeText": true,
+        "showSources": true,
+        "cacheUnit": "days",
+        "defaultPath": "posts",
+        "postsURL": "safe://solidpoc05/ldp/solid-plume01/posts/"
+    }
 
     // ----- INIT -----
     // start app by loading the config file
     applyConfig();
+    init(hardConfig);
     // var http = new XMLHttpRequest();
     // http.open('get', 'config.json');
     // http.onreadystatechange = function() {
@@ -1521,6 +1563,7 @@ Plume = (function () {
         response.text().then((text) => { init(JSON.parse(text)) });
     });
 */
+
     // return public functions
     return {
         notify: notify,
