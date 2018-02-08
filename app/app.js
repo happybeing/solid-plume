@@ -5,29 +5,28 @@ const pocWebUri = 'safe://solidpoc5/'   // URI for solid-plume PoC on SAFEnetwor
 
 // SAFE network app configuration
 // Example solidConfig TODO: is this needed? - maybe use just for PoC / testing?
-const solidCfg = {
+const solidConfig = {
     webid:    'safe://solid.happybeing/profile/card#me', // Public readable resource
     storage:  'safe://solid.happybeing'                 // Public read/write solid service
 }
 
-// Example Configure() config. Supplied by App to identify it in the SAFE Auth UI
-const appCfg = {
+// Application specific config to identify this app SAFE Authenticator UI
+const appConfig = {
   id:     'com.happybeing',
   name:   'Solid Plume (Testing)',
   vendor: 'happybeing SAFE ;-)'
 }
 
-// Default SAFE Auth permissions to request. Optional parameter to Configure()
-const defaultPerms = {
+// Default SAFE Auth permissions to request. Optional parameter to simpleAuthorise()
+const appPermissions = {
   // TODO is this right for solid service container (ie solid.<safepublicid>)
-  _public: ['Read', 'Insert', 'Update', 'Delete'],         // request to insert into `_public` container
-//  _other: ['Insert', 'Update'] // request to insert and update in `_other` container
+  _public:      ['Read', 'Insert', 'Update', 'Delete'], // request to insert into `_public` container
+  _publicNames: ['Read', 'Insert', 'Update', 'Delete'], // TODO maybe reduce defaults later
 }
-
 
 var Plume = Plume || {};
 
-Plume = (function () {
+Plume = ( function () {
     'use strict';
 
     var xsd = $rdf.Namespace('http://www.w3.org/2001/XMLSchema#')
@@ -113,9 +112,20 @@ Plume = (function () {
 
     //TODO review: development uses hard coded config...
     // Auth on SAFE using application config
-    SafenetworkLDP.Configure($rdf,solidCfg,appCfg,defaultPerms)
+
+    // NEW:
+    // TODO move to login()?
+    Safenetwork.simpleAuthorise(appConfig,appPermissions)
+
+    // OLD:
+    //Safenetwork.Configure(null,solidConfig,appConfig,appPermissions)
+    //Safenetwork.safenetworkAuthorise()
+
+    // TODO change rdflib.js to use Safenetwork and then this should work:
+    $rdf.SafenetworkWeb = Safenetwork
+
     // TODO to use solid-safenetwork.js from rdflib, uncomment this:
-    //$rdf.SafenetworkLDP.Configure(null,solidCfg,appCfg,defaultPerms)
+    //$rdf.SafeWeb.Configure(null,solidConfig,appConfig,appPermissions)
 
     // Initializer
     var init = function(configData) {
@@ -269,8 +279,11 @@ Plume = (function () {
 
         // For local testing
         if (testWebID){
-          gotWebID(testWebID)
-          notify('error', "Authentication disabled - using localhost WebID");
+          Safenetwork.simpleAuthorise(appConfig,appPermissions).then(_ => {
+            gotWebID(testWebID)
+            //notify('error', "Authentication disabled - using localhost WebID");
+            return
+          });
           return
         }
 

@@ -35,19 +35,23 @@ https://github.com/solid/
 
 // One Safenetwork object
 // THIS WORKS:
-// SafenetworkLDP.protoFetch('safe://localhost:8443',{method:'GET'})
+// SafenetworkWeb.protoFetch('safe://localhost:8443',{method:'GET'})
 // THIS FAILS:
-//SafenetworkLDP.Configure()
+//SafenetworkWeb.Configure()
 
 // To use SAFEnetwork from within rdflib.js
-var Safenetwork = $rdf.SafenetworkLDP
+//var Safenetwork = $rdf.Safenetwork
 
 // TODO remove: For development, use local js/solid-safenetwork.js object:
 // To use SAFEnetwork using solid-safenetwork.js directly:
-//NOT NEEDED! -> var Safenetwork = new SafenetworkLDP(true)
-var Safenetwork = SafenetworkLDP
+//NOT NEEDED! -> var Safenetwork = new SafenetworkWeb(true)
 
-const fetch = SafenetworkLDP.protoFetch.bind(Safenetwork)
+// NEW:
+var Safenetwork = new SafenetworkWebApi
+const fetch = SafenetworkWebApi.protoFetch.bind(Safenetwork)
+// OLD:
+//var Safenetwork = new SafenetworkLDP
+//const fetch = SafenetworkLDP.protoFetch.bind(Safenetwork)
 
 // WebID authentication and signup
 var Solid = Solid || {};
