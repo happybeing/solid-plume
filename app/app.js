@@ -1,4 +1,5 @@
 /* ---- DON'T EDIT BELOW ---- */
+/* eslint-disable */
 
 // Hard coded for proof-of-concept
 const pocWebUri = 'safe://solidpoc5/'   // URI for solid-plume PoC on SAFEnetwork
@@ -26,7 +27,7 @@ const appPermissions = {
 
 var Plume = Plume || {};
 
-Plume = ( function () {
+Plume = ( async function () {
     'use strict';
 
     var xsd = $rdf.Namespace('http://www.w3.org/2001/XMLSchema#')
@@ -114,18 +115,9 @@ Plume = ( function () {
     // Auth on SAFE using application config
 
     // NEW:
-    // TODO move to login()?
-    Safenetwork.simpleAuthorise(appConfig,appPermissions)
-
-    // OLD:
-    //Safenetwork.Configure(null,solidConfig,appConfig,appPermissions)
-    //Safenetwork.safenetworkAuthorise()
-
-    // TODO change rdflib.js to use Safenetwork and then this should work:
-    $rdf.SafenetworkWeb = Safenetwork
-
-    // TODO to use solid-safenetwork.js from rdflib, uncomment this:
-    //$rdf.SafeWeb.Configure(null,solidConfig,appConfig,appPermissions)
+    // TODO need auth here because after login the page reloads
+    // TODO try to avoid re-auth - for ex by safing authUri in localStorage?
+    await Safenetwork.simpleAuthorise(appConfig,appPermissions)
 
     // Initializer
     var init = function(configData) {
@@ -186,7 +178,7 @@ Plume = ( function () {
     };
 
     // Set default config values
-    var applyConfig = function(configData) {
+    var applyConfig = async function(configData) {
         // loaded config from file
         config.defaultPath = 'posts';
         if (configData) {
@@ -222,7 +214,39 @@ Plume = ( function () {
             config.postsURL = appURL + config.defaultPath;
         }
 
+        // TODO maybe should be called by showInitDialog(), which still to be implemented
+        if (user.authenticated)
+          await initialiseSafeLDP(config.postsURL)
+
         config.loadInBg = true;
+    };
+
+    // TODO This is for the proof of concept, so still very simple for now
+    var initialiseSafeLDP = async function (postsURL){
+      console.log("safe:plume initialiseSafeLDP('"+postsURL+"')")
+
+      try {
+        // Check if an LDP service is already initialised for the SAFE public name
+        let response = await fetch(postsURL,{method:'HEAD'})
+        console.log('HEAD response: %O',response)
+        if (response.ok)
+            parseResponseMeta(response)
+        else {
+          let publicName = Safenetwork.hostpart(postsURL)
+          try {
+            // Ensure public name exists
+            await Safenetwork.createPublicName(publicName)
+          } catch (err) {
+            // Assume error means it exists
+            console.log("safe:plume public name '"+publicName+"'exists")
+          }
+
+          await Safenetwork.setupServiceOnHost(publicName,Safenetwork.SN_SERVICEID_LDP)
+        }
+
+      } catch(err){
+        console.log("initaliseSafeLDP error: "+err)
+      }
     };
 
     // show a particular blog
@@ -275,15 +299,14 @@ Plume = ( function () {
     }
 
     // Log user in
-    var login = function() {
+    var login = async function() {
 
         // For local testing
         if (testWebID){
-          Safenetwork.simpleAuthorise(appConfig,appPermissions).then(_ => {
+          let safeAppHandle = await Safenetwork.simpleAuthorise(appConfig,appPermissions)
+          if (safeAppHandle)
             gotWebID(testWebID)
             //notify('error', "Authentication disabled - using localhost WebID");
-            return
-          });
           return
         }
 

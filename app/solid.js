@@ -1,4 +1,3 @@
-
 /*
 The MIT License (MIT)
 
@@ -32,26 +31,18 @@ https://github.com/solid/
 */
 
 // TODO strip out functions with OLD_ prefix
-
-// One Safenetwork object
-// THIS WORKS:
-// SafenetworkWeb.protoFetch('safe://localhost:8443',{method:'GET'})
-// THIS FAILS:
-//SafenetworkWeb.Configure()
+/* eslint-disable */
 
 // To use SAFEnetwork from within rdflib.js
 //var Safenetwork = $rdf.Safenetwork
+//const fetch = SafenetworkWebApi.protoFetch  // SAFE Network Web Services via fetch()
 
-// TODO remove: For development, use local js/solid-safenetwork.js object:
-// To use SAFEnetwork using solid-safenetwork.js directly:
-//NOT NEEDED! -> var Safenetwork = new SafenetworkWeb(true)
-
-// NEW:
+// TODO re-instate the above and remove up to 'end of testing'
 var Safenetwork = new SafenetworkWebApi
-const fetch = SafenetworkWebApi.protoFetch.bind(Safenetwork)
-// OLD:
-//var Safenetwork = new SafenetworkLDP
-//const fetch = SafenetworkLDP.protoFetch.bind(Safenetwork)
+const fetch = SafenetworkWebApi.protoFetch  // SAFE Network Web Services via fetch()
+fetch.protocols.safe = Safenetwork.fetch.bind(Safenetwork)
+$rdf.SafenetworkLDP = Safenetwork  // $rdf must use same SAFE Web API object to ensure auth with SAFE Network
+// TODO end of testing to be removed
 
 // WebID authentication and signup
 var Solid = Solid || {};
