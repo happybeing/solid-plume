@@ -163,6 +163,7 @@ Solid.identity = (function(window) {
     // fetch user profile (follow sameAs links) and return promise with a graph
     // resolve(graph)
     var getProfile = function(url) {
+        console.log('safe:plume getProfile(',url,')')
         var promise = new Promise(function(resolve, reject) {
             // Load main profile
             Solid.web.get(url).then(
@@ -400,6 +401,7 @@ Solid.web = (function(window) {
     // check if a resource exists and return useful Solid info (acl, meta, type, etc)
     // resolve(metaObj)
     var head = function(url) {
+    console.log('safe:plume HEAD '+url)
 /*        var promise = new Promise(function(resolve) {
             var http = new XMLHttpRequest();
             http.open('HEAD', url);
@@ -425,6 +427,7 @@ Solid.web = (function(window) {
     // fetch an RDF resource
     // resolve(graph) | reject(this)
     var get = function(url) {
+        console.log('safe:plume GET '+url)
         var promise = new Promise(function(resolve, reject) {
             var g = new $rdf.graph();
             var f = new $rdf.fetcher(g, TIMEOUT);
@@ -477,6 +480,7 @@ Solid.web = (function(window) {
     // create new resource
     // resolve(metaObj) | reject
     var post = function(url, slug, data, isContainer) {
+        console.log('safe:plume POST '+url)
         var resType = (isContainer)?LDP('BasicContainer').uri:LDP('Resource').uri;
 
         let postHeaders = new Headers({
@@ -523,6 +527,7 @@ Solid.web = (function(window) {
     };
 
     var put = function(url, data) {
+      console.log('safe:plume PUT '+url)
       let putHeaders = new Headers({
         'Content-Type': 'text/turtle',
       });
@@ -562,6 +567,7 @@ Solid.web = (function(window) {
     // delete a resource
     // resolve(true) | reject
     var del = function(url) {
+      console.log('safe:plume DELETE '+url)
       //TODO var f = new $rdf.fetcher(new $rdf.graph());
       return fetch(url,{method:'DELETE', headers: new Headers}).then((response) => {
         console.log('DELETE response: %O',response)
