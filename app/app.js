@@ -738,16 +738,21 @@ Plume = (  function () {
 
     // save post data to server
     var savePost = function(post, url) {
+        console.log('safe:plume savePost(post, %s)', url)
+
         //TODO also write tags - use sioc:topic -> uri
 
         var slug = makeSlug(post.title);
+        var docURI
         if (!url){
           // Prefix to prevent overwriting existing post with same title
           slug = Date.now() + '-' + slug
-          var docURI = plumeConfig.postsURL + slug;
+          docURI = plumeConfig.postsURL + slug;
         }
-        else
+        else {
           docURI = url;
+          slug = url.slice(url.lastIndexOf('/') + 1)
+        }
 
         var authURI = docURI + '#author';
 
@@ -774,6 +779,7 @@ Plume = (  function () {
                 if (['http','safe'].indexOf(res.url.slice(0,4)) >= 0) {
                     res.url = plumeConfig.postsURL.slice(0, plumeConfig.postsURL.lastIndexOf('/') + 1)+slug;
                 }
+                console.log('safe:plume savePost() res.url: %s', res.url  )
                 cancelPost('?post='+encodeURIComponent(res.url));
             }
         )
@@ -1706,7 +1712,7 @@ var applyConfig = async function(configData) {
   }
 
   var appURL = window.location.origin+window.location.pathname;
-  console.log('solid:plume appURL set to: ', appURL)
+  console.log('safe:plume appURL set to: ', appURL)
   if (!plumeConfig.postsURL || plumeConfig.postsURL.length === 0) {
      plumeConfig.postsURL = appURL + plumeConfig.defaultPath;
   }

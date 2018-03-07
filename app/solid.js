@@ -401,7 +401,7 @@ Solid.web = (function(window) {
     // check if a resource exists and return useful Solid info (acl, meta, type, etc)
     // resolve(metaObj)
     var head = function(url) {
-    console.log('safe:plume HEAD '+url)
+      console.log('safe:plume HEAD '+url)
 /*        var promise = new Promise(function(resolve) {
             var http = new XMLHttpRequest();
             http.open('HEAD', url);
