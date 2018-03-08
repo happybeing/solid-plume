@@ -33,16 +33,13 @@ https://github.com/solid/
 // TODO strip out functions with OLD_ prefix
 /* eslint-disable */
 
-// To use SAFEnetwork from within rdflib.js
-//var Safenetwork = $rdf.Safenetwork
-//const fetch = SafenetworkWebApi.protoFetch  // SAFE Network Web Services via fetch()
+// Enable 'safe:' URI protocol
+var Safenetwork = new SafenetworkWebApi     // SAFE Web and services API
 
-// TODO re-instate the above and remove up to 'end of testing'
-var Safenetwork = new SafenetworkWebApi
-const fetch = SafenetworkWebApi.protoFetch  // SAFE Network Web Services via fetch()
+const fetch = SafenetworkWebApi.protoFetch  // fetch() that supports 'safe:' protocol
 fetch.protocols.safe = Safenetwork.fetch.bind(Safenetwork)
-$rdf.SafenetworkLDP = Safenetwork  // $rdf must use same SAFE Web API object to ensure auth with SAFE Network
-// TODO end of testing to be removed
+
+$rdf.appFetch = Safenetwork.fetch.bind(Safenetwork) // Hook for rdflib Fetcher
 
 // WebID authentication and signup
 var Solid = Solid || {};
