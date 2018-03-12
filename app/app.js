@@ -1,6 +1,43 @@
-/* ---- DON'T EDIT BELOW ---- */
+// Note: to minimise changes between this fork and the original Plume,
+// the existing code layout is being maintained, so we disable eslint:
 /* eslint-disable */
 
+/*
+Configuration for SAFE Network
+==============================
+
+Ultimately the blog should self deploy from one instance on SAFE Network, to
+a new instance owned by the visitor. For example by providing a 'deploy
+new blog' comman on the menu. Such a command could prompt for a host (profile
+and public name) location to deploy the blog, and then proceed to copy
+itself automatically to the user's SAFE storage. Until then...
+
+Note: this works with SAFE Network alpha2
+
+Instructions To Deploy Plume on SAFE Network:
+
+1. Visit maidsafe.net to gain access to SAFE Network, including:
+2. - download Peruse Browser and use it to create an account
+3. - download the Web Hosting Manager
+4. Get a copy of the Plume blog files on your local machine by
+   cloning the repository http://github.com/theWebalyst/solid-plume
+5. Copy `solid-plume/config-example.json` to `config.json` and customise
+    it by editing the settings for 'title' and 'tagline'
+   To use a different avatar, replace solid-plume/mugshot.jpg with your own
+???. Decide on the name and location of you blog. For example if you want
+   your blog to be accessed as 'safe://blog.allaboutdance' you will use:
+   a service 'blog' and public name 'allaboutdance'
+???. Use the Web Hosting Manager to:
+   - create a public name for your blog (e.g. 'allaboutdance')
+   - set-up a service for the blog (e.g. 'blog')
+   - publish the service and upload the contents of your solid-plume
+   directory to your blog.allaboutdance storage on SAFE Network.
+???. Visit the blog by entering 'blog.allaboutdance' into Peruse browser,
+   and you can begin writing your first blog post.
+*/
+
+
+//
 // Hard coded for proof-of-concept
 const pocWebUri = 'safe://solidpoc5/'   // URI for solid-plume PoC on SAFEnetwork
 
@@ -12,7 +49,7 @@ const solidConfig = {
 }
 
 // Application specific config to identify this app SAFE Authenticator UI
-const appConfig = {
+let safeAppConfig = {
   id:     'com.happybeing',
   name:   'Solid Plume (Testing)',
   vendor: 'happybeing SAFE ;-)'
@@ -31,9 +68,11 @@ const appPermissions = {
 
 var Plume = Plume || {};
 var plumeConfig = {};
+var appURL = window.location.origin+window.location.pathname;
 
-// TODO now leave this to initialiseSafeLDP()
-Safenetwork.simpleAuthorise(appConfig,appPermissions).then( (appHandle) => {
+
+// TODO modify this to get safeAppConfig from config.json - so must do  plume init before this
+Safenetwork.simpleAuthorise(safeAppConfig,appPermissions).then( (appHandle) => {
 
 Plume = (  function () {
     'use strict';
@@ -42,8 +81,6 @@ Plume = (  function () {
 
     // TODO remove OLDconfig once NEWconfig works
     //var config = plumeConfig || {};
-
-    var appURL = window.location.origin+window.location.pathname;
 
     // TODO remove or comment out for http deployment
     // Enable testing (disables login and WebID auth)
@@ -362,6 +399,7 @@ Plume = (  function () {
           // Hard code profile for proof-of-concept
           Plume.user.name = 'happybeing'        //profile.name;
           Plume.user.picture = appURL + 'mugshot.jpg'; // pocWebUri or appURL or ?
+          console.log('plume:DEBUG Plume.user.picture:', Plume.user.picture)
           Plume.user.date = Date.now();
           authors[webid] = Plume.user;
           saveLocalAuthors();
@@ -457,6 +495,7 @@ Plume = (  function () {
             }
         }
         if (pic && pic.uri.length > 0) {
+console.log('plume:DEBUG profile.picture: ', profile.picture)
             profile.picture = pic.uri;
         }
 
@@ -1011,6 +1050,8 @@ Plume = (  function () {
                 authors[webid].updated = true;
                 authors[webid].name = profile.name;
                 authors[webid].picture = profile.picture;
+                console.log('plume:DEBUG authors[webid].picture:', authors[webid].picture)
+
                 // save to localStorage
                 saveLocalAuthors();
                 // release lock
@@ -1043,6 +1084,7 @@ Plume = (  function () {
             }
             if (author && author.picture) {
                 picture = author.picture;
+                console.log('plume:DEBUG picture = author.picture:', picture)
             }
         }
         return {name: name, picture: picture};
@@ -1565,7 +1607,7 @@ Plume = (  function () {
                     Plume.user = data.user;
                     if (Plume.user.authenticated) {
                         if (!Safenetwork.isAuthorised())
-                          Safenetwork.simpleAuthorise(appConfig,appPermissions)
+                          Safenetwork.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
                         hideLogin();
                     }
                     if (isOwner()) {
@@ -1592,14 +1634,13 @@ Plume = (  function () {
         "owners": ["https://localhost:8443/profile/card#me","safe://solidpoc5/card#me"],
         "title": "SAFE Plume Blog",
         "tagline": "Safe as houses, light as a feather",
-        "p{"safe://solidpoc5/card#me":{"webid":"safe://solidpoc5/card#me","authenticated":true,"name":"happybeing","picture":"safe://solidpoc5/mugshot.jpg","date":1520249659542}}icture": "safe-quill.png",
+        "picture": "safe-quill.png",
         "fadeText": true,
         "showSources": true,
         "cacheUnit": "days",
         "defaultPath": "posts",
         "postsURL": "safe://solidpoc05/ldp/solid-plume01/posts/"
     }
-
     // ----- INIT -----
     // start app by loading the config file
     applyConfig();
@@ -1743,7 +1784,7 @@ var initialiseSafeLDP = async function (postsURL){
 
   try {
     if (!Safenetwork.isAuthorised())
-      await Safenetwork.simpleAuthorise(appConfig,appPermissions)
+      await Safenetwork.simpleAuthorise(plumeConfig.plumeConfig.safeAppConfig,appPermissions)
 
     if (await Safenetwork.getServiceForUri(postsURL)){
       return true
@@ -1843,7 +1884,13 @@ let hardConfig = {
    "cacheUnit": "days",
    "defaultPath": "posts",
    // SAFE:
-   "postsURL": "safe://solidpoc05/posts/"
+   "postsURL": "safe://solidpoc05/posts/",
+   safeAppConfig: {
+     id:     'com.happybeing',
+     name:   'Solid Plume (Testing)',
+     vendor: 'happybeing SAFE ;-)'
+   }
+
    // HTTP:
 //   "postsURL": "https://localhost:8443/posts/"
 }
@@ -1852,8 +1899,24 @@ let hardConfig = {
 // start app by loading the config file
 async function initPlume(){
   console.log('safe:plume initPlume() BEGIN')
-  await applyConfig();    // Without config param, will loadsLocalStorage()
-  init(hardConfig);
+  await applyConfig();    // Without config param, tries loadsLocalStorage()
+
+  let jsonConfig = hardConfig
+  let configFile = appURL + 'config.json'
+  try {
+    let response = await fetch(configFile)
+    if (response.status == 200) {
+      try {
+        let jsonConfig = response.json()
+      } catch (e) {
+        console.log('Failed to parse \'', configFile, '\' :', e)
+      }
+    }
+  } catch (e) {
+    console.log('Unable to load config from \'', configFile, '\' :', e)
+  }
+
+  init(jsonConfig);
   console.log('safe:plume initPlume() END')
 }
 initPlume()
