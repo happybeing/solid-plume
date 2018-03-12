@@ -2,7 +2,7 @@
 
 <img src="https://deiu.github.io/solid-plume/img/logo.png">
 
-This is a fork of *Plume* modified to work with the *SAFE Network* through a library which allows any Solid app to store its data in the user's own *SAFE Network* storage - an alternative to web based storage on a Solid server. The *SAFE Network* is the world's first autonomous network, a secure, decentralised storage and communications platform being developed my Scottish company http://maidsafe.net.
+This is a fork of *Plume* modified to work with the *SAFE Network* through a library which allows any Solid app to store its data in the user's own *SAFE Network* storage - an alternative to web based storage on a Solid server. The *SAFE Network* is the world's first autonomous network, a secure, decentralised storage and communications platform being developed by Scottish company http://maidsafe.net.
 
 NOTE: This project is a work in progress, and the instructions below have not been updated for use with *SAFE Network* storage yet. So they refer to the original *Plume* application and configuration for use with a Solid server data store. That will probably not work with this fork, although the ultimate aim is make it as easy as possible to switch between storage on a Solid server and *SAFE Network*! You can follow development by watching this repo, or following the author on twitter.com/safepress
 
