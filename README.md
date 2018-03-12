@@ -2,6 +2,10 @@
 
 <img src="https://deiu.github.io/solid-plume/img/logo.png">
 
+This is a fork of *Plume* modified to work with the *SAFE Network* through a library which allows any Solid app to store its data in the user's own *SAFE Network* storage - an alternative to web based storage on a Solid server. The *SAFE Network* is the world's first autonomous network, a secure, decentralised storage and communications platform being developed my Scottish company http://maidsafe.net.
+
+NOTE: This project is a work in progress, and the instructions below have not been updated for use with *SAFE Network* storage yet. So they refer to the original *Plume* application and configuration for use with a Solid server data store. That will probably not work with this fork, although the ultimate aim is make it as easy as possible to switch between storage on a Solid server and *SAFE Network*! You can follow development by watching this repo, or following the author on twitter.com/safepress
+
 *Plume* is a 100% client-side blogging platform, built using [Solid standards](https://github.com/solid/), in which data is decoupled from the application itself. This means that you can host the application on any Web server, without having to install anything -- no database, no messing around with Node.js, it has 0 dependencies! It also means that other similar applications will be able to reuse the data resulting from your posts, without having to go through a complicated API.
 
 Plume uses [Markdown](https://en.wikipedia.org/wiki/Markdown) to provide you with the easiest and fastest experience for writing beautiful articles.
