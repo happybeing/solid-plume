@@ -414,7 +414,7 @@ Solid.web = (function(window) {
         */
         //TODO var f = new $rdf.fetcher(new $rdf.graph());
         return fetch(url,{method:'HEAD'}).then((response) => {
-          console.log('HEAD response: %O',response)
+          console.log('HEAD response: %s %O',response.statusText, response)
           if (response.ok)
             parseResponseMeta(response)
 //            response.text().then((text) => { init(JSON.parse(text)) });
@@ -489,7 +489,7 @@ Solid.web = (function(window) {
 
         //TODO var f = new $rdf.fetcher(new $rdf.graph());
         return fetch(url,{method:'POST', body: (data && data.length > 0?data:''), headers: postHeaders}).then((response) => {
-          console.log('POST response: %O',response)
+          console.log('POST response: %s %O',response.statusText, response)
           if (response.status === 200 || response.status === 201) {
             return parseResponseMeta(response);
           }
@@ -531,7 +531,7 @@ Solid.web = (function(window) {
 
       //TODO var f = new $rdf.fetcher(new $rdf.graph());
       return fetch(url,{method:'PUT', body: (data?data:''), headers: putHeaders}).then((response) => {
-        console.log('PUT response: %O',response)
+        console.log('PUT response: %s %O',response.statusText, response)
         if (response.status === 200 || response.status === 201) {
           return parseResponseMeta(response);
         }
@@ -567,9 +567,12 @@ Solid.web = (function(window) {
       console.log('safe:plume DELETE '+url)
       //TODO var f = new $rdf.fetcher(new $rdf.graph());
       return fetch(url,{method:'DELETE', headers: new Headers}).then((response) => {
-        console.log('DELETE response: %O',response)
-        if (response.status === 200 ) {
-          return true;
+        console.log('DELETE response: %s %O',response.statusText, response)
+        if ( response.status === 204 || response.status === 200 ) {
+          return true
+        }
+        else {
+          return false
         }
       });
     }
