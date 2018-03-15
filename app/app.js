@@ -37,16 +37,20 @@ Instructions To Deploy Plume on SAFE Network:
 */
 
 
-//
+
+let appURL = window.location.origin+window.location.pathname;
+console.log('safe:plume appURL set to: ', appURL)
+
+let pocWebUri = appURL
+if (appURL.indexOf('http') === 0) {
+    pocWebUri = 'safe://solidpoc7/'   // For localhost development
+}
+
 // Hard coded for proof-of-concept
-const pocWebUri = 'safe://solidpoc7/'   // URI for solid-plume PoC on SAFEnetwork
 // Enable testing (disables login and WebID auth)
 // Note: to Create/Edit, this testWebID must match an entry in plumeConfig.owners
-var testWebID = 'https://localhost:8443/profile/card#me'  // localhost server
+let testWebID = 'https://localhost:8443/profile/card#me'  // localhost server
 testWebID = pocWebUri + 'card#me'               // SAFEnetwork
-
-var appURL = window.location.origin+window.location.pathname;
-console.log('safe:plume appURL set to: ', appURL)
 
 // Hard coded default plume config - used if no config.json:
 let hardConfig = {
@@ -2023,9 +2027,15 @@ async function initPlume(){
     if (response.status == 200) {
       try {
         jsonConfig = await response.json()
+        console.log('safe:plume using config from file \'' + configFile + '\': ' + jsonConfig)
       } catch (e) {
         console.log('Failed to parse \'', configFile, '\' :', e)
       }
+    }
+    else {
+      let msg = ' load config from file \'' + configFile + '\' - response: ' + response.status
+      console.log('FAILED to' + msg)
+      notify('Could not' + msg)
     }
   } catch (e) {
     console.log('Unable to load config from \'', configFile, '\' :', e)
