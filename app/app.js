@@ -52,7 +52,9 @@ if (appURL.indexOf('http') === 0) {
 let testWebID = 'https://localhost:8443/profile/card#me'  // localhost server
 testWebID = pocWebUri + 'card#me'               // SAFEnetwork
 
-// Hard coded default plume config - used if no config.json:
+// Hard coded default plume config
+// - used if no config.json and not overriden immediately below
+// TODO out of date - see curent config.json
 let hardConfig = {
    "title": "SAFE Plume Blog (PoC)",
    "tagline": "WARNING: config.json not found - using defaults",
@@ -80,8 +82,10 @@ let hardConfig = {
    }
 }
 
-// Development and testing
+// Development and testing (not used if config.json loads)
 if ( true ) {
+
+  // TODO out of date - see curent config.json
   hardConfig = {
     "title": "SAFE Plume Blog (dev hardConfig)",
     "tagline": "Safe as houses, light as a feather",
