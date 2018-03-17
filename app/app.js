@@ -39,7 +39,6 @@ Instructions To Deploy Plume on SAFE Network:
 
 
 let appURL = window.location.origin+window.location.pathname;
-console.log('safe:plume appURL set to: ', appURL)
 
 let pocWebUri = appURL
 if (appURL.indexOf('http') === 0) {
@@ -51,6 +50,10 @@ if (appURL.indexOf('http') === 0) {
 // Note: to Create/Edit, this testWebID must match an entry in plumeConfig.owners
 let testWebID = 'https://localhost:8443/profile/card#me'  // localhost server
 testWebID = pocWebUri + 'card#me'               // SAFEnetwork
+
+console.log('safe:plume appURL   : ', appURL)
+console.log('safe:plume pocWebUri: ', pocWebUri)
+console.log('safe:plume testWebID: ', testWebID)
 
 // Hard coded default plume config
 // - used if no config.json and not overriden immediately below
@@ -83,9 +86,9 @@ let hardConfig = {
 }
 
 // Development and testing (not used if config.json loads)
-if ( true ) {
+let useHardConfig = true  // true to force use of hardConfig
 
-  // TODO out of date - see curent config.json
+if ( true ) {
   hardConfig = {
     "title": "SAFE Plume Blog (dev hardConfig)",
     "tagline": "Safe as houses, light as a feather",
@@ -757,6 +760,11 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         }
         // append button list to viewer
         footer.appendChild(buttonList);
+    }
+
+    var newPost = function () {
+        Plume.clearPendingPost();
+        Plume.showEditor();
     }
 
     var showEditor = function(url) {
@@ -1805,6 +1813,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         posts: posts,
         login: login,
         logout: logout,
+        newPost: newPost,
         hideLogin: hideLogin,
         signup: signup,
         resetAll: resetAll,
@@ -1997,8 +2006,7 @@ var init = function(configData) {
         Plume.showEditor(url);
         return;
     } else if (Plume.queryVals['new'] !== undefined) {
-        Plume.clearPendingPost();
-        Plume.showEditor();
+        Plulme.newPost();
         return;
     } else if (Plume.queryVals['blog'] && Plume.queryVals['blog'].length > 0) {
         plumeConfig.loadInBg = false;
@@ -2025,25 +2033,29 @@ async function initPlume(){
 //  await applyConfig();    // Without config param, tries loadsLocalStorage()
 
   let jsonConfig = hardConfig
-  let configFile = appURL + 'config.json'
-  try {
-    let response = await fetch(configFile)
-    if (response.status == 200) {
-      try {
-        jsonConfig = await response.json()
-        console.log('safe:plume using config from file \'' + configFile + '\': ' + jsonConfig)
-      } catch (e) {
-        console.log('Failed to parse \'', configFile, '\' :', e)
+
+  if (!useHardConfig) {
+    let configFile = appURL + 'config.json'
+    try {
+      let response = await fetch(configFile)
+      if (response.status == 200) {
+        try {
+          jsonConfig = await response.json()
+          console.log('safe:plume using config from file \'' + configFile + '\': ' + jsonConfig)
+        } catch (e) {
+          console.log('Failed to parse \'', configFile, '\' :', e)
+        }
       }
+      else {
+        let msg = ' load config from file \'' + configFile + '\' - response: ' + response.status
+        console.log('FAILED to' + msg)
+        notify('Could not' + msg)
+      }
+    } catch (e) {
+      console.log('Unable to load config from \'', configFile, '\' :', e)
     }
-    else {
-      let msg = ' load config from file \'' + configFile + '\' - response: ' + response.status
-      console.log('FAILED to' + msg)
-      notify('Could not' + msg)
-    }
-  } catch (e) {
-    console.log('Unable to load config from \'', configFile, '\' :', e)
   }
+  console.log('safe:plume jsonConfig: ', jsonConfig)
 
   init(jsonConfig);
 }
