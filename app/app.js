@@ -1598,14 +1598,14 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
 
     var cancelPost = function(url) {
         clearPendingPost();
-        url = (url)?url:window.location.pathname;
+        url = url ?url : window.location.pathname;
 
         let urlParam = ''
         if ( user.authenticated && url.indexOf('author=') < 0 ) {
-          urlParam = (url.indexOf('?') > 0 ? '&author=' : '?author=') + encodeURIComponent(user.webid)
+          urlParam = url.indexOf('?') > 0 ? authorParam('&') : authorParam('?')
         }
 
-        window.location.replace(url);
+        window.location.replace(url + urlParam);
     };
 
     // reset to initial view
@@ -1974,11 +1974,11 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
             console.log('safe:plume AUTH simpleAuthorise()')
             await Safenetwork.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
             // TODO at this point (or somewhere else) check we have required SAFE access
+            user = plumeConfig.owner
             user.webid = decodeURIComponent(queryVals['author'])
             user.authenticated = true
             console.log('safe:plume DEBUG user.authenticated:', user.authenticated)
             console.log('safe:plume DEBUG user.webid:', user.webid)
-            // TODO this needs to preserver other user info from 'owner' including name and picture
             hideLogin()
             showNewPostButton()
           } catch (err) {
