@@ -36,13 +36,11 @@ Instructions To Deploy Plume on SAFE Network:
    and you can begin writing your first blog post.
 */
 
-
-
 let appURL = window.location.origin+window.location.pathname;
 
 let pocWebUri = appURL
 if (appURL.indexOf('http') === 0) {
-    pocWebUri = 'safe://solidpoc7/'   // For localhost development
+    pocWebUri = 'safe://solidpocA/'   // For localhost development
 }
 
 // Hard coded for proof-of-concept
@@ -126,13 +124,6 @@ const solidConfig = {
     storage:  'safe://solid.happybeing'                 // Public read/write solid service
 }
 
-// Application specific config to identify this app SAFE Authenticator UI
-let safeAppConfig = {
-  id:     'com.happybeing',
-  name:   'Solid Plume (Testing)',
-  vendor: 'happybeing SAFE ;-)'
-}
-
 // Default SAFE Auth permissions to request. Optional parameter to simpleAuthorise()
 const appPermissions = {
   // TODO is this right for solid service container (ie solid.<safepublicid>)
@@ -142,13 +133,14 @@ const appPermissions = {
 
 // NEW:
 // TODO need auth here because after login the page reloads
-// TODO re-factor to auth only if Plume.user.authenticated
+// TODO re-factor to auth only if user.authenticated
 
 var Plume = Plume || {};
 var plumeConfig = {};
 
-Plume = (  function () {
+( async function () {
     'use strict';
+    console.log('safe:plume DEBUG URL START: ', window.location.href)
 
     var xsd = $rdf.Namespace('http://www.w3.org/2001/XMLSchema#')
 
@@ -195,14 +187,17 @@ Plume = (  function () {
         return '';
     };
 
-    // Default is not author (ie visitor) - changed by successful SAFE auth
-    Plume.asAuthor = false
+    var hasSafeInitialised = false
 
     var authorParam = function (prefix){
+      console.log('safe:plume DEBUG authorParam(', prefix, ')')
+      console.log('safe:plume DEBUG - user.authenticated: ', user.authenticated)
+      console.log('safe:plume DEBUG - user.webid: ', user.webid)
+
       if (!prefix) {
         prefix = '&'
       }
-      return (Plume.user.authenticated ? prefix + 'author=' + encodeURIComponent(Plume.user.webid) : '')
+      return (user.authenticated ? prefix + 'author=' + encodeURIComponent(user.webid) : '')
     }
 
     // Get params from the URL
@@ -227,7 +222,7 @@ Plume = (  function () {
         authenticated: false
     };
 
-    Plume.user = {};
+    var user = {};
     var posts = {};
     var authors = {};
     var webSockets = {};
@@ -373,6 +368,7 @@ Plume = (  function () {
 
     // show a particular blog
     var showBlog = function(url) {
+      console.log('safe:plume showBlog()')
       // Check if storage is found
       fetch(plumeConfig.postsURL,{method:'HEAD'}).then((response) => {
         console.log('HEAD response: %O',response)
@@ -382,7 +378,9 @@ Plume = (  function () {
             if (!plumeConfig.loadInBg) {
                 showLoading();
             }
+            console.log('safe:plume DEBUG URLa: ', window.location.href)
             fetchPosts(url);
+            console.log('safe:plume DEBUG URLb: ', window.location.href)
         } else {
           // Offer to initialise the blog
 /*          hideLoading();
@@ -391,15 +389,19 @@ Plume = (  function () {
           document.querySelector('.error-url').innerHTML = document.querySelector('.error-url').href = url;
           document.querySelector('.error').classList.remove('hidden');
 */
+console.log('safe:plume DEBUG URLc: ', window.location.href)
           resetAll();
+          console.log('safe:plume DEBUG URLd: ', window.location.href)
           hideLoading();
-          if (Plume.user.authenticated) {
+          console.log('safe:plume DEBUG URLe: ', window.location.href)
+          if (user.authenticated) {
               document.querySelector('.start').classList.remove('hidden');
           } else {
               document.querySelector('.init').classList.remove('hidden');
           }
         }
       })
+      console.log('safe:plume DEBUG URLf: ', window.location.href)
     };
 
     // Init data container NOT USED BY PLUME ORIGINAL
@@ -419,7 +421,7 @@ Plume = (  function () {
                             // add dummy post
                             var acme = {
                                 title: "Welcome to Plume, a Solid blogging platform",
-                                author: Plume.user.webid,
+                                author: user.webid,
                                 date: "3 Dec 2015",
                                 body: "```\nHellowWorld();\n```\n\n**Note!** This is a demo post created under your name. Feel free to remove it whenever you wish.\n\n*Plume* is a 100% client-side application built using [Solid standards](https://github.com/solid/), in which data is decoupled from the application itself. This means that you can host the application on any Web server, without having to install anything -- no database, no messing around with Node.js, it has 0 dependencies! It also means that other similar applications will be able to reuse the data resulting from your posts, without having to go through a complicated API.\n\nPlume uses [Markdown](https://en.wikipedia.org/wiki/Markdown) to provide you with the easiest and fastest experience for writing beautiful articles. Click the *Edit* button below to see this article.\n\nGive it a try, write your first post!",
                                 tags: [
@@ -451,8 +453,8 @@ Plume = (  function () {
         // For local testing
         if (plumeConfig.owner && plumeConfig.owner.webid){
 //          if (!Safenetwork.isAuthorised()){
-            if (!Plume.hasSafeInitialised)
-              Plume.hasSafeInitialised = await initialiseSafeLDP(plumeConfig.postsURL)
+            if (!hasSafeInitialised)
+              hasSafeInitialised = await initialiseSafeLDP(plumeConfig.postsURL)
 
             if (Safenetwork.isAuthorised())
               gotWebID(plumeConfig.owner.webid)
@@ -482,25 +484,29 @@ Plume = (  function () {
     };
     // Log user out
     var logout = function() {
-        Plume.user = defaultUser;
+        user = defaultUser;
         clearLocalStorage();
         showLogin();
         // TODO remove WAS:
         // window.location.reload();
 
         // Remove author URL param
+        // TODO make this work if 'author=' is followed by another param
         let newUrl = window.location.href
-        newUrl = newUrl.slice(0,newUrl.indexOf('&author'))
-        newUrl = newUrl.slice(0,newUrl.indexOf('?author'))
+        newUrl = (newUrl.indexOf('&author') > 0 ? newUrl.slice(0,newUrl.indexOf('&author')) : newUrl)
+        newUrl = (newUrl.indexOf('?author') > 0 ? newUrl.slice(0,newUrl.indexOf('?author')) : newUrl)
         window.history.pushState("", document.querySelector('title').value, newUrl)
         window.location.reload()
     };
 
     // set the logged in user
     var gotWebID = function(webid) {
+        console.log('gotWebID(',webid,')')
         // set WebID
-        Plume.user.webid = webid;
-        Plume.user.authenticated = true;
+        user.webid = webid;
+        user.authenticated = true;
+        console.log('safe:plume DEBUG user.authenticated:', user.authenticated)
+        console.log('safe:plume DEBUG user.webid:', user.webid)
         hideLogin();
         if ( isOwner() ) {
             showNewPostButton()
@@ -508,14 +514,14 @@ Plume = (  function () {
 
         if (true){
           // Use config.json settings for proof of concept (should be taken from owner WebId)
-          //Plume.user.name = 'happybeing'        //profile.name;
-          //Plume.user.picture = appURL + 'mugshot.jpg'; // pocWebUri or appURL or ?
-          Plume.user.name = plumeConfig.owner.name        //profile.name;
-          Plume.user.picture = appURL + plumeConfig.owner.picture; // pocWebUri or appURL or ?
+          //user.name = 'happybeing'        //profile.name;
+          //user.picture = appURL + 'mugshot.jpg'; // pocWebUri or appURL or ?
+          user.name = plumeConfig.owner.name        //profile.name;
+          user.picture = appURL + plumeConfig.owner.picture; // pocWebUri or appURL or ?
 
-          console.log('plume:DEBUG Plume.user.picture:', Plume.user.picture)
-          Plume.user.date = Date.now();
-          authors[webid] = Plume.user;
+          console.log('plume:DEBUG user.picture:', user.picture)
+          user.date = Date.now();
+          authors[webid] = user;
           saveLocalAuthors();
 
           // TODO Workspaces (whatever they are!) not implemented yet...
@@ -525,13 +531,13 @@ Plume = (  function () {
           let storeWs = {title: 'storage', url: '/'}
           ws.push(prefsWs)
           ws.push(storeWs)
-          Plume.user.workspaces = ws;
+          user.workspaces = ws;
 
           // TODO disabled: now handled using author URL param
           //saveLocalStorage(); // save to local storage and refresh page
           //window.location.reload();
-          if (Plume.queryVals['author'] === undefined) {
-            let urlParam = (window.location.pathname.indexOf('?') > 0 ? '&author=' : '?author=') + encodeURIComponent(Plume.user.webid)
+          if (queryVals['author'] === undefined) {
+            let urlParam = (window.location.pathname.indexOf('?') > 0 ? '&author=' : '?author=') + encodeURIComponent(user.webid)
             window.history.pushState("", document.querySelector('title').value, window.location.pathname+urlParam);
             window.location.reload()
           } else {
@@ -542,15 +548,15 @@ Plume = (  function () {
           // fetch and set user profile
           Solid.identity.getProfile(webid).then(function(g) {
               var profile = getUserProfile(webid, g);
-              Plume.user.name = profile.name;
-              Plume.user.picture = profile.picture;
-              Plume.user.date = Date.now();
+              user.name = profile.name;
+              user.picture = profile.picture;
+              user.date = Date.now();
               // add self to authors list
-              authors[webid] = Plume.user;
+              authors[webid] = user;
               saveLocalAuthors();
               // add workspaces
               Solid.identity.getWorkspaces(webid, g).then(function(ws){
-                  Plume.user.workspaces = ws;
+                  user.workspaces = ws;
                   // save to local storage and refresh page
                   saveLocalStorage();
                   window.location.reload();
@@ -763,12 +769,12 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
     }
 
     var newPost = function () {
-        Plume.clearPendingPost();
-        Plume.showEditor();
+        clearPendingPost();
+        showEditor();
     }
 
     var showEditor = function(url) {
-        if (!Plume.user.authenticated) {
+        if (!user.authenticated) {
             notify('all', "You must log in before creating or editing posts.");
             return;
         }
@@ -840,7 +846,9 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         document.querySelector('.start').classList.add('hidden');
         document.querySelector('.editor').classList.remove('hidden');
         document.querySelector('.editor-title').focus();
-        document.querySelector('.editor-author').innerHTML = Plume.user.name;
+  console.log('plume:safe DEBUG user.name: ', user.name)
+  console.log('plume:safe DEBUG user.picture: ', user.picture)
+        document.querySelector('.editor-author').innerHTML = user.name;
         document.querySelector('.editor-date').innerHTML = formatDate();
         document.querySelector('.editor-tags').innerHTML = '';
 
@@ -895,7 +903,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         post.modified = moment().utcOffset('00:00').format("YYYY-MM-DDTHH:mm:ssZ");
 
         if (!url) {
-            post.author = Plume.user.webid;
+            post.author = user.webid;
             post.created = post.modified;
         }
 
@@ -985,7 +993,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
                 if (_posts.length === 0) {
                     resetAll();
                     hideLoading();
-                    if (Plume.user.authenticated) {
+                    if (user.authenticated) {
                         document.querySelector('.start').classList.remove('hidden');
                     } else {
                         document.querySelector('.init').classList.remove('hidden');
@@ -1114,7 +1122,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
                             }
                         }
                         // add to list of authors if not self
-                        if (post.author && post.author != Plume.user.webid && !authors[post.author]) {
+                        if (post.author && post.author != user.webid && !authors[post.author]) {
                             authors[post.author] = author;
                             // save list to localStorage
                             saveLocalAuthors();
@@ -1166,7 +1174,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
     // TODO add date of last update to avoid repeated fetches
     var updateAuthorInfo = function(webid, url) {
         // check if it really needs updating first
-        if (webid == Plume.user.webid || authors[webid].updated || authors[webid].lock) {
+        if (webid == user.webid || authors[webid].updated || authors[webid].lock) {
             return;
         }
         authors[webid].lock = true;
@@ -1322,7 +1330,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         // add footer with action links
         var footer = document.createElement('footer');
 
-        if (Plume.user.webid == post.author) {
+        if (user.webid == post.author) {
             // edit button
             var edit = document.createElement('a');
             edit.classList.add("action-button");
@@ -1526,7 +1534,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
 
     // check if user is among the owners list
     var isOwner = function() {
-        if (plumeConfig.owners && plumeConfig.owners.indexOf(Plume.user.webid) >= 0) {
+        if (plumeConfig.owners && plumeConfig.owners.indexOf(user.webid) >= 0) {
             return true;
         }
         return false;
@@ -1593,8 +1601,8 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         url = (url)?url:window.location.pathname;
 
         let urlParam = ''
-        if ( Plume.user.authenticated && url.indexOf('author=') < 0 ) {
-          urlParam = (url.indexOf('?') > 0 ? '&author=' : '?author=') + encodeURIComponent(Plume.user.webid)
+        if ( user.authenticated && url.indexOf('author=') < 0 ) {
+          urlParam = (url.indexOf('?') > 0 ? '&author=' : '?author=') + encodeURIComponent(user.webid)
         }
 
         window.location.replace(url);
@@ -1602,6 +1610,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
 
     // reset to initial view
     var resetAll = function(refresh) {
+        console.log('safe:plume DEBUG URL resetAll() START: ', window.location.href)
         document.getElementById('menu-button').classList.remove('hidden');
         if (isOwner()) {
             showNewPostButton();
@@ -1614,7 +1623,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         document.querySelector('.posts').classList.remove('hidden');
         // document.querySelector('.editor-add-tag').value = '';
         if (posts && len(posts) === 0) {
-            if (Plume.user.authenticated) {
+            if (user.authenticated) {
                 document.querySelector('.start').classList.remove('hidden');
             } else {
                 document.querySelector('.init').classList.remove('hidden');
@@ -1623,13 +1632,10 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         if (refresh) {
             showBlog(plumeConfig.postsURL);
         } else {
-            let urlParam = ''
-            if ( Plume.user.authenticated && queryVals['author'] === undefined ) {
-              urlParam = (window.location.pathname.indexOf('?') > 0 ? '&author=' : '?author=') + encodeURIComponent(Plume.user.webid)
-            }
-
+            let urlParam = authorParam('?')
             window.history.pushState("", document.querySelector('title').value, window.location.pathname+urlParam);
         }
+        console.log('safe:plume DEBUG URL resetAll() DONE: ', window.location.href)
     };
 
     // login / logout buttons + new post
@@ -1717,7 +1723,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
     // save config data to localStorage
     var saveLocalStorage = function() {
         var data = {
-            user: Plume.user,
+            user: user,
             config: plumeConfig
         };
         try {
@@ -1742,10 +1748,12 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
                 var dateValid = data.config.saveDate + 1000 * 60 * 60 * 24;
                 if (Date.now() < dateValid) {
                     plumeConfig = data.config;
-                    Plume.user = data.user;
-                    if (Plume.user.authenticated) {
-                        if (!Safenetwork.isAuthorised())
+                    user = data.user;
+                    if (user.authenticated) {
+                        if (!Safenetwork.isAuthorised()) {
+                          console.log('safe:plume AUTH simpleAuthorise()')
                           Safenetwork.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
+                        }
                         hideLogin();
                     }
                     if (isOwner()) {
@@ -1806,10 +1814,265 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
     });
 */
 
+    /*
+     * Apply application config and state
+     * - applies a supplied config, or loads from localStorage
+     *
+     * NEWconfig TODO remove OLDconfig if this works...
+     *
+     * For SAFE Network
+     * - load config (hard coded TODO: provide UI for edit/deploy blog)
+     * - init of LDP service
+     *
+     * This separated from Plume object because it needs to be synchronous
+     * and making Plume an async function breaks the UI (login() etc)
+     */
+
+    // Set default config values
+    var applyConfig = async function(configData) {
+      console.log('safe:plume applyConfig()...')
+
+      // loaded config from file
+      plumeConfig.defaultPath = 'posts';
+      if (configData) {
+         plumeConfig = configData;
+         // append trailing slash to data path if missing
+         if (plumeConfig.defaultPath.lastIndexOf('/') < 0) {
+             plumeConfig.defaultPath += '/';
+         }
+         plumeConfig.saveDate = Date.now();
+         // TODO remove:
+         //saveLocalStorage();
+      } else {
+         // try to load config from localStorage
+         // TODO is there any value in this? disabled to find out!
+         console.log("*** DISABLED ***: Loading config from localStorage");
+         //loadLocalStorage();
+      }
+
+      document.querySelector('.blog-picture').src = plumeConfig.picture;
+      document.querySelector('.blog-title').innerHTML = plumeConfig.title;
+      document.querySelector('title').innerHTML = plumeConfig.title;
+      document.querySelector('.blog-tagline').innerHTML = plumeConfig.tagline;
+      // set default parent element for posts
+      plumeConfig.postsElement = '.posts';
+
+      if (user.authenticated) {
+         if (hasSafeInitialised === undefined){
+            hasSafeInitialised = false  // Prevent async second call to initialiseSafeLDP() from applyConfig()
+            hasSafeInitialised = await initialiseSafeLDP(plumeConfig.postsURL)
+         }
+         if (hasSafeInitialised) {
+           user = configData.owner
+           console.log('safe:plume DEBUG user.authenticated:', user.authenticated)
+           console.log('safe:plume DEBUG user.webid:', user.webid)
+           console.log('safe:plume DEBUG user CHANGED user.name:', user.name)
+           hideLogin();
+           if (isOwner()) {
+               showNewPostButton();
+           }
+         }
+      }
+
+      // append trailing slash to data path if missing
+      if (plumeConfig.defaultPath.lastIndexOf('/') < 0) {
+         plumeConfig.defaultPath += '/';
+      }
+
+      if (!plumeConfig.postsURL || plumeConfig.postsURL.length === 0) {
+         plumeConfig.postsURL = appURL + plumeConfig.defaultPath;
+      }
+
+      plumeConfig.loadInBg = true;
+    };
+
+    /*
+     * Passive creation of SAFE public name and LDP service
+     *
+     * Checks if the blog post URI container is accessible
+     *
+     * If the container exists, the service will be
+     * initialised as a side effect of the check
+     *
+     * If the container is not set up with a service this
+     * function tries set one up (using the SAFE Network API) to:
+     * - create a public name (matching the host part of the URI)
+     * - create the LDP service enttry for the public name
+     *
+     * @param postsURL URI of an LDP container for stored blog posts
+     *
+     * @returns true if the service is ready
+     */
+
+    // TODO This is for the proof of concept, so still very simple for now
+    var initialiseSafeLDP = async function (postsURL) {
+      console.log("safe:plume initialiseSafeLDP('"+postsURL+"')")
+
+      try {
+        if (!Safenetwork.isAuthorised()) {
+          console.log('safe:plume AUTH simpleAuthorise()')
+          await Safenetwork.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
+        }
+
+        if (await Safenetwork.getServiceForUri(postsURL)){
+          return true
+        }
+        else {
+          // LDP service not present, so set it up
+
+          let publicName = Safenetwork.hostpart(postsURL)
+          try {
+            // Ensure public name exists
+            await Safenetwork.createPublicName(publicName)
+          } catch (err) {
+            // Assume error means it exists
+            console.log("safe:plume public name '"+publicName+"'exists")
+            return undefined
+          }
+
+           await Safenetwork.setupServiceOnHost(publicName,Safenetwork.SN_SERVICEID_LDP)
+           return true
+        }
+
+      } catch(err){
+        console.log("initaliseSafeLDP error: "+err)
+        return undefined
+      }
+
+      return undefined
+    };
+
+    // Initializer
+    var init = async function (configData) {
+        console.log('safe:plume init()...')
+        // set config params
+        await applyConfig(configData);
+
+        // try to load authors
+        loadLocalAuthors();
+
+        // Add online/offline events
+        Solid.status.onOffline(function(){
+            notify('info', "You are no longer connected to the internet.", 3000);
+        });
+        Solid.status.onOnline(function(){
+            notify('info', "And we're back!");
+        });
+        // Init growl-like notifications
+        window.addEventListener('load', function () {
+            Notification.requestPermission(function (status) {
+                // This allows to use Notification.permission with Chrome/Safari
+                if (Notification.permission !== status) {
+                    Notification.permission = status;
+                }
+            });
+        });
+
+        if (queryVals['author'] !== undefined) {
+          // Logged in mode
+          try {
+            console.log('safe:plume AUTH simpleAuthorise()')
+            await Safenetwork.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
+            // TODO at this point (or somewhere else) check we have required SAFE access
+            user.webid = decodeURIComponent(queryVals['author'])
+            user.authenticated = true
+            console.log('safe:plume DEBUG user.authenticated:', user.authenticated)
+            console.log('safe:plume DEBUG user.webid:', user.webid)
+            // TODO this needs to preserver other user info from 'owner' including name and picture
+            hideLogin()
+            showNewPostButton()
+          } catch (err) {
+            // TODO remove author param?
+            showLogin()
+          }
+        }
+        else {
+          console.log('safe:plume AUTH initReadOnly()')
+          await Safenetwork.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
+          showLogin()
+        }
+
+        // basic app routes
+        if (queryVals['post'] && queryVals['post'].length > 0) {
+            var url = decodeURIComponent(queryVals['post']);
+            showViewer(url);
+            return;
+        } else if (queryVals['edit'] && queryVals['edit'].length > 0) {
+            var url = decodeURIComponent(queryVals['edit']);
+            console.log('safe:plume DEBUG URL3: ', window.location.href)
+            showEditor(url);
+            console.log('safe:plume DEBUG URL4: ', window.location.href)
+            return;
+        } else if (queryVals['new'] !== undefined) {
+            console.log('safe:plume DEBUG URL1: ', window.location.href)
+            newPost();
+            console.log('safe:plume DEBUG URL2: ', window.location.href)
+            return;
+        } else if (queryVals['blog'] && queryVals['blog'].length > 0) {
+            plumeConfig.loadInBg = false;
+            showBlog(queryVals['blog']);
+            return;
+        } else {
+            // Load posts or initialize post container
+            plumeConfig.loadInBg = false;
+            if (plumeConfig.postsURL && plumeConfig.postsURL.length > 0) {
+                showBlog(plumeConfig.postsURL);
+            } else {
+                // TODO not implemented in solid-plume original
+                console.log("WARNING: init dialog not implemented")
+                //showInitDialog();
+            }
+        }
+    };
+
+    // ----- INIT -----
+    // start app by loading the config file
+    async function initPlume () {
+      console.log('safe:plume initPlume()')
+      // TODO remove this if ok without
+    //  await applyConfig();    // Without config param, tries loadsLocalStorage()
+
+      let jsonConfig = hardConfig
+
+      if (!useHardConfig) {
+        let configFile = appURL + 'config.json'
+        try {
+          let response = await fetch(configFile)
+          if (response.status == 200) {
+            try {
+              jsonConfig = await response.json()
+              console.log('safe:plume using config from file \'' + configFile + '\': ' + jsonConfig)
+            } catch (e) {
+              console.log('Failed to parse \'', configFile, '\' :', e)
+            }
+          }
+          else {
+            let msg = ' load config from file \'' + configFile + '\' - response: ' + response.status
+            console.log('FAILED to' + msg)
+            notify('Could not' + msg)
+          }
+        } catch (e) {
+          console.log('Unable to load config from \'', configFile, '\' :', e)
+        }
+      }
+      console.log('safe:plume jsonConfig: ', jsonConfig)
+
+      await init(jsonConfig);
+    };
+
+    var safeInit = async function () {
+      await initPlume()
+    };
+
+    console.log('safe:plume DEBUG user:', user)
+    console.log('safe:plume DEBUG safeInit to be called...')
+    await safeInit()
+    console.log('safe:plume DEBUG safeInit() completed!')
+
     // return public functions
     return {
         notify: notify,
-        user: Plume.user,
+        user: user,
         posts: posts,
         login: login,
         logout: logout,
@@ -1817,7 +2080,9 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         hideLogin: hideLogin,
         signup: signup,
         resetAll: resetAll,
+        initPlume: initPlume,
         cancelPost: cancelPost,
+        safeInit: safeInit,
         showBlog: showBlog,
         showEditor: showEditor,
         showViewer: showViewer,
@@ -1836,235 +2101,23 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         queryVals: queryVals,
         clearPendingPost: clearPendingPost
     };
-}(this)); // End of Plume
+}(this).then( (result) => {
+  console.log('safe:plume DEBUG Plume init done!')
+  console.log('Plume result: ', result)
+  console.log('safe:plume DEBUG URL: ', window.location.href)
+  //result.logout()
+  Plume = result
+  return result
+})
+
+);
+
+/*.then( _ => {
+  //this.logout()
+  menu.init()
+})*/
 
 
-/*
- * Apply application config and state
- * - applies a supplied config, or loads from localStorage
- *
- * NEWconfig TODO remove OLDconfig if this works...
- *
- * For SAFE Network
- * - load config (hard coded TODO: provide UI for edit/deploy blog)
- * - init of LDP service
- *
- * This separated from Plume object because it needs to be synchronous
- * and making Plume an async function breaks the UI (login() etc)
- */
-
-// Set default config values
-var applyConfig = async function(configData) {
-  console.log('safe:plume applyConfig()...')
-
-  // loaded config from file
-  plumeConfig.defaultPath = 'posts';
-  if (configData) {
-     plumeConfig = configData;
-     // append trailing slash to data path if missing
-     if (plumeConfig.defaultPath.lastIndexOf('/') < 0) {
-         plumeConfig.defaultPath += '/';
-     }
-     plumeConfig.saveDate = Date.now();
-     // TODO remove:
-     //Plume.saveLocalStorage();
-  } else {
-     // try to load config from localStorage
-     // TODO is there any value in this? disabled to find out!
-     console.log("*** DISABLED ***: Loading config from localStorage");
-     //Plume.loadLocalStorage();
-  }
-
-  document.querySelector('.blog-picture').src = plumeConfig.picture;
-  document.querySelector('.blog-title').innerHTML = plumeConfig.title;
-  document.querySelector('title').innerHTML = plumeConfig.title;
-  document.querySelector('.blog-tagline').innerHTML = plumeConfig.tagline;
-  // set default parent element for posts
-  plumeConfig.postsElement = '.posts';
-
-  if (Plume.user.authenticated) {
-     if (Plume.hasSafeInitialised === undefined){
-        Plume.hasSafeInitialised = false  // Prevent async second call to initialiseSafeLDP() from applyConfig()
-        Plume.hasSafeInitialised = await initialiseSafeLDP(plumeConfig.postsURL)
-     }
-     if (Plume.hasSafeInitialised) {
-       Plume.user = configData.owner
-       Plume.hideLogin();
-       if (isOwner()) {
-           showNewPostButton();
-       }
-     }
-  }
-
-  // append trailing slash to data path if missing
-  if (plumeConfig.defaultPath.lastIndexOf('/') < 0) {
-     plumeConfig.defaultPath += '/';
-  }
-
-  if (!plumeConfig.postsURL || plumeConfig.postsURL.length === 0) {
-     plumeConfig.postsURL = appURL + plumeConfig.defaultPath;
-  }
-
-  plumeConfig.loadInBg = true;
-};
-
-/*
- * Passive creation of SAFE public name and LDP service
- *
- * Checks if the blog post URI container is accessible
- *
- * If the container exists, the service will be
- * initialised as a side effect of the check
- *
- * If the container is not set up with a service this
- * function tries set one up (using the SAFE Network API) to:
- * - create a public name (matching the host part of the URI)
- * - create the LDP service enttry for the public name
- *
- * @param postsURL URI of an LDP container for stored blog posts
- *
- * @returns true if the service is ready
- */
-
-// TODO This is for the proof of concept, so still very simple for now
-var initialiseSafeLDP = async function (postsURL){
-  console.log("safe:plume initialiseSafeLDP('"+postsURL+"')")
-
-  try {
-    if (!Safenetwork.isAuthorised())
-      await Safenetwork.simpleAuthorise(plumeConfig.plumeConfig.safeAppConfig,appPermissions)
-
-    if (await Safenetwork.getServiceForUri(postsURL)){
-      return true
-    }
-    else {
-      // LDP service not present, so set it up
-
-      let publicName = Safenetwork.hostpart(postsURL)
-      try {
-        // Ensure public name exists
-        await Safenetwork.createPublicName(publicName)
-      } catch (err) {
-        // Assume error means it exists
-        console.log("safe:plume public name '"+publicName+"'exists")
-        return undefined
-      }
-
-       await Safenetwork.setupServiceOnHost(publicName,Safenetwork.SN_SERVICEID_LDP)
-       return true
-    }
-
-  } catch(err){
-    console.log("initaliseSafeLDP error: "+err)
-    return undefined
-  }
-
-  return undefined
-};
-
-// Initializer
-var init = function(configData) {
-    console.log('safe:plume init()...')
-    // set config params
-    applyConfig(configData);
-
-    // try to load authors
-    Plume.loadLocalAuthors();
-
-    // Add online/offline events
-    Solid.status.onOffline(function(){
-        notify('info', "You are no longer connected to the internet.", 3000);
-    });
-    Solid.status.onOnline(function(){
-        notify('info', "And we're back!");
-    });
-    // Init growl-like notifications
-    window.addEventListener('load', function () {
-        Notification.requestPermission(function (status) {
-            // This allows to use Notification.permission with Chrome/Safari
-            if (Notification.permission !== status) {
-                Notification.permission = status;
-            }
-        });
-    });
-
-    if (Plume.queryVals['author'] !== undefined) {
-      // TODO at this point (or somewhere else) check we have required SAFE access
-      Plume.user.webid = decodeURIComponent(Plume.queryVals['author'])
-      Plume.user.authenticated = true
-      Plume.hideLogin()
-      Plume.showNewPostButton()
-    }
-
-    // basic app routes
-    if (Plume.queryVals['post'] && Plume.queryVals['post'].length > 0) {
-        var url = decodeURIComponent(Plume.queryVals['post']);
-        Plume.showViewer(url);
-        return;
-    } else if (Plume.queryVals['edit'] && Plume.queryVals['edit'].length > 0) {
-        var url = decodeURIComponent(Plume.queryVals['edit']);
-        Plume.showEditor(url);
-        return;
-    } else if (Plume.queryVals['new'] !== undefined) {
-        Plulme.newPost();
-        return;
-    } else if (Plume.queryVals['blog'] && Plume.queryVals['blog'].length > 0) {
-        plumeConfig.loadInBg = false;
-        Plume.showBlog(Plume.queryVals['blog']);
-        return;
-    } else {
-        // Load posts or initialize post container
-        plumeConfig.loadInBg = false;
-        if (plumeConfig.postsURL && plumeConfig.postsURL.length > 0) {
-            Plume.showBlog(plumeConfig.postsURL);
-        } else {
-            // TODO not implemented in solid-plume original
-            console.log("WARNING: init dialog not implemented")
-            //Plume.showInitDialog();
-        }
-    }
-};
-
-// ----- INIT -----
-// start app by loading the config file
-async function initPlume(){
-  console.log('safe:plume initPlume()')
-  // TODO remove this if ok without
-//  await applyConfig();    // Without config param, tries loadsLocalStorage()
-
-  let jsonConfig = hardConfig
-
-  if (!useHardConfig) {
-    let configFile = appURL + 'config.json'
-    try {
-      let response = await fetch(configFile)
-      if (response.status == 200) {
-        try {
-          jsonConfig = await response.json()
-          console.log('safe:plume using config from file \'' + configFile + '\': ' + jsonConfig)
-        } catch (e) {
-          console.log('Failed to parse \'', configFile, '\' :', e)
-        }
-      }
-      else {
-        let msg = ' load config from file \'' + configFile + '\' - response: ' + response.status
-        console.log('FAILED to' + msg)
-        notify('Could not' + msg)
-      }
-    } catch (e) {
-      console.log('Unable to load config from \'', configFile, '\' :', e)
-    }
-  }
-  console.log('safe:plume jsonConfig: ', jsonConfig)
-
-  init(jsonConfig);
-}
-
-// TODO modify this to get safeAppConfig from config.json - so must do  plume init before this
-Safenetwork.simpleAuthorise(safeAppConfig,appPermissions).then( (appHandle) => {
-  initPlume()
-
-// TODO end of NEWconfig
 
 Plume.menu = (function() {
     var ESCAPE_CODE = 27;
@@ -2131,5 +2184,5 @@ Plume.menu = (function() {
         forceClose: forceClose
     }
 })();
+
 Plume.menu.init();
-}) // end of simpleAuth()
