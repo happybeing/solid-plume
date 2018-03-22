@@ -84,7 +84,7 @@ let hardConfig = {
 }
 
 // Development and testing (not used if config.json loads)
-let useHardConfig = true  // true to force use of hardConfig
+let useHardConfig = false  // true to force use of hardConfig
 
 if ( true ) {
   hardConfig = {
@@ -1987,8 +1987,10 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
           }
         }
         else {
-          console.log('safe:plume AUTH initReadOnly()')
-          await Safenetwork.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
+          if (!Safenetwork.isConnected()) {
+            console.log('safe:plume AUTH initReadOnly()')
+            await Safenetwork.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
+          }
           showLogin()
         }
 
@@ -2029,12 +2031,18 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
     // start app by loading the config file
     async function initPlume () {
       console.log('safe:plume initPlume()')
-      // TODO remove this if ok without
-    //  await applyConfig();    // Without config param, tries loadsLocalStorage()
+      // TODO remove this? Keep as comment to assist design of dual http/safe support
+      //  await applyConfig();    // Without config param, tries loadsLocalStorage()
 
       let jsonConfig = hardConfig
 
       if (!useHardConfig) {
+        // Must connect to access safe: URIs
+        if (!Safenetwork.isConnected()) {
+          console.log('safe:plume AUTH initReadOnly()')
+          await Safenetwork.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
+        }
+
         let configFile = appURL + 'config.json'
         try {
           let response = await fetch(configFile)
@@ -2060,14 +2068,10 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
       await init(jsonConfig);
     };
 
-    var safeInit = async function () {
-      await initPlume()
-    };
-
     console.log('safe:plume DEBUG user:', user)
-    console.log('safe:plume DEBUG safeInit to be called...')
-    await safeInit()
-    console.log('safe:plume DEBUG safeInit() completed!')
+    console.log('safe:plume DEBUG initPlume to be called...')
+    await initPlume()
+    console.log('safe:plume DEBUG initPlume() completed!')
 
     // return public functions
     return {
@@ -2082,7 +2086,6 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         resetAll: resetAll,
         initPlume: initPlume,
         cancelPost: cancelPost,
-        safeInit: safeInit,
         showBlog: showBlog,
         showEditor: showEditor,
         showViewer: showViewer,
@@ -2112,7 +2115,8 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
 
 );
 
-/*.then( _ => {
+/* TODO remove this
+  .then( _ => {
   //this.logout()
   menu.init()
 })*/
