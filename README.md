@@ -2,17 +2,17 @@
 
 This is a simple blog app for SAFE Network, created by forking Solid Plume, a blog which allowed the owner to store their data on a Solid server of their choice.
 
-The purpose of SAFE Plume is to that combining SAFE Network and Project Solid can deliver key features of both. SAFE Plume was used to demonstrate this at the first SAFE Network European DevCon in Ayr, Scotland (April 23rd, 2018). The presentation included background on Project Solid, how it can enhance SAFE Network, and demonstrated how easy it is to add RESTful interfaces to SAFE Network. 
+The purpose of SAFE Plume is show to that combining SAFE Network and Project Solid can deliver key features of both. SAFE Plume was used to demonstrate this at the first SAFE Network European DevCon in Ayr, Scotland (April 23rd, 2018). The presentation included background on Project Solid, how it can enhance SAFE Network, and demonstrated how easy it is to add RESTful interfaces to SAFE Network.
 
 The key innovations demonstrated at the SAFE DevCon were:
 
-- that a Solid application can work on SAFE Network with little, or potentially no modification at all, just by incorporating a nodejs library ( [safenetwork-webapi](https://github.com/theWebalyst/safenetwork-webapi))
+- that a Solid application can work on SAFE Network with little, or potentially no modification at all, just by incorporating a nodejs library ([safenetwork-webapi](https://github.com/theWebalyst/safenetwork-webapi))
 - that the same technique can be used to add support for any RESTful web protocol, making it easy for web app developers to utilise SAFE Network using simple, known web protocols (such as WebDav, LDP, FTP, SMTP etc.). This avoids the need to learn the necessarily complex and unfamiliar [SAFE DOM API](https://safenetwork.org/documentation/)
 
 ## Links
 - *Supercharging the SAFE Network with Project Solid,* presented at the SAFE Network European DevCon in Ayr, Scotland (April 23rd, 2018):
   - [Google slides.](https://docs.google.com/presentation/d/1exhGrFrSDrEpEQsZTO23Gn6nZNpdjJ8ooSW2lR_Pp6Y/edit?usp=sharing) This full set of slides is more detailed than the recorded presentation which is available to view online, so it may be helpful to look through the slides alongside viewing the presentation video which includes a live demo of SAFE Plume Blog.
- - [SAFE Network Forum Topic](https://forum.safedev.org/t/proposals-for-restful-service-handling/1550?u=happybeing) including the video played at the DevCon and forum Q&A about the presentation.
+  - [SAFE Network Forum Topic](https://forum.safedev.org/t/proposals-for-restful-service-handling/1550?u=happybeing) including the video played at the DevCon and forum Q&A about the presentation.
 - Follow me on twitter at [SAFE and SoLiD](https://twitter.com/safepress)
 - Search twitter for [#SAFEDevCon18](https://twitter.com/search?q=%23SAFEDevCon18&src=typd)
 
