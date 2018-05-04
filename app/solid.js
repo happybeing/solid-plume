@@ -36,6 +36,10 @@ https://github.com/solid/
 // Enable 'safe:' URI protocol
 var Safenetwork = new SafenetworkWebApi     // SAFE Web and services API
 
+window.addEventListener("beforeunload", function (event) {
+  Safenetwork.setSafeApi(null)  // Ensures network connections are freed
+});
+
 const fetch = SafenetworkWebApi.protoFetch  // fetch() that supports 'safe:' protocol
 fetch.protocols.safe = Safenetwork.fetch.bind(Safenetwork)
 
