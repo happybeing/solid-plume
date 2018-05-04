@@ -1,11 +1,24 @@
 {
-    "owners": [""],
-    "title": "Plume",
-    "tagline": "Light as a feather",
+    "title": "Another Plume Blog",
+    "tagline": "Customise title ^ etc by editing config.json",
+
     "picture": "img/logo.svg",
     "fadeText": true,
     "showSources": true,
     "cacheUnit": "days",
     "defaultPath": "posts",
-    "postsURL": ""
+
+    "owners": ["safe://<your-website>/card#me"],
+    "owner": {
+      "name": "<your-name>",
+      "webid": "safe://<your-website>/card#me",
+      "picture": "img/icon-blue.svg",
+      "authenticated": false
+    },
+
+    "safeAppConfig": {
+      "id":     "Untrusted",
+      "name":   "Another Plume Blog",
+      "vendor": "Untrusted"
+    }
 }
