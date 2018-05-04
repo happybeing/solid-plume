@@ -449,7 +449,6 @@ console.log('safe:plume DEBUG URLc: ', window.location.href)
 
     // Log user in
     var login = async function() {
-
         // For local testing
         if (plumeConfig.owner && plumeConfig.owner.webid){
 //          if (!Safenetwork.isAuthorised()){
@@ -498,6 +497,20 @@ console.log('safe:plume DEBUG URLc: ', window.location.href)
         window.history.pushState("", document.querySelector('title').value, newUrl)
         window.location.reload()
     };
+
+    var reloadPage = function (uriParams)
+    {
+      console.log('reloadPage(' + uriParams + ')...')
+      if (uriParams) {
+        let newUrl = window.location.href
+        newUrl = (newUrl.indexOf('?') > 0 ? newUrl.slice(0,newUrl.indexOf('?')) : newUrl)
+        newUrl = newUrl + ( uriParams.indexOf('/') == 0 ? uriParams.slice(1) : uriParams )
+        console.log('pushState newUrl: ' + newUrl)
+        window.history.pushState("", document.querySelector('title').value, newUrl)
+      }
+      window.location.reload()
+    }
+
 
     // set the logged in user
     var gotWebID = function(webid) {
@@ -752,7 +765,8 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         // add back button
         var back = document.createElement('a');
         back.classList.add("action-button");
-        back.href = window.location.pathname + authorParam('?');
+        back.href = '.'
+        back.setAttribute('onclick', 'Plume.reloadPage(\'/' + authorParam('?') + '\')');
         back.innerHTML = '≪ Back to blog';
         buttonList.appendChild(back);
         // add view source
@@ -1309,7 +1323,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         // create title
         var title = document.createElement('h1');
         title.classList.add('post-title');
-        title.innerHTML = (post.title)?"<a class='clickable' href='?post="+encodeURIComponent(post.url)+authorParam()+"'>"+post.title+"</a>":'';
+        title.innerHTML = (post.title) ? "<a class='clickable' href='.' onclick=\"Plume.reloadPage('?post="+encodeURIComponent(post.url)+authorParam()+"')\">"+post.title+"</a>" : '';
         // append title to body
         header.appendChild(title);
 
@@ -1334,7 +1348,8 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
             // edit button
             var edit = document.createElement('a');
             edit.classList.add("action-button");
-            edit.href = '?edit='+encodeURIComponent(post.url)+authorParam();
+            edit.href = '.'
+            edit.setAttribute('onclick', 'Plume.reloadPage(\'?edit=' + encodeURIComponent(post.url) + authorParam() + '\')');
             edit.setAttribute('title', 'Edit post');
             edit.innerHTML = '<img src="img/logo.svg" alt="Edit post">Edit';
             footer.appendChild(edit);
@@ -1489,10 +1504,10 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         if (status !== 'granted') {
             Notification.requestPermission(function (permission) {
                 // Whatever the user answers, we make sure we store the information
-                Notification.permission = permission;
+                // Notification.permission = permission; // TODO disabled illegal assignment to read-only property!
             });
         } else if (status === 'granted') {
-            Notification.permission = 'denied';
+            // Notification.permission = 'denied'; // TODO disabled illegal assignment to read-only property!
         }
     };
     // Browser notifications status
@@ -1529,7 +1544,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
     var togglePreview = function() {
         editor.togglePreview();
         var text = document.querySelector('.preview');
-        text.innerHTML = (text.innerHTML=="View")?"Edit":"View";
+        text.innerHTML = (text.innerHTML=="Preview")?"Edit":"Preview";
     };
 
     // check if user is among the owners list
@@ -1963,7 +1978,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
             Notification.requestPermission(function (status) {
                 // This allows to use Notification.permission with Chrome/Safari
                 if (Notification.permission !== status) {
-                    Notification.permission = status;
+                    // Notification.permission = status; // TODO disabled illegal assignment to read-only property!
                 }
             });
         });
@@ -2081,6 +2096,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         login: login,
         logout: logout,
         newPost: newPost,
+        reloadPage: reloadPage,
         hideLogin: hideLogin,
         signup: signup,
         resetAll: resetAll,
