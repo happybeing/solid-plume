@@ -34,16 +34,16 @@ https://github.com/solid/
 /* eslint-disable */
 
 // Enable 'safe:' URI protocol
-var Safenetwork = new SafenetworkWebApi     // SAFE Web and services API
+var safeJs = Safenetworkjs.safeJs // SAFE Web and services API
 
 window.addEventListener("beforeunload", function (event) {
-  Safenetwork.setSafeApi(null)  // Ensures network connections are freed
+  safeJs.setSafeAppHandle(null)  // Ensures network connections are freed
 });
 
-const fetch = SafenetworkWebApi.protoFetch  // fetch() that supports 'safe:' protocol
-fetch.protocols.safe = Safenetwork.fetch.bind(Safenetwork)
+const fetch = Safenetworkjs.protoFetch  // fetch() that supports 'safe:' protocol
+fetch.protocols.safe = safeJs.fetch.bind(safeJs)
 
-$rdf.appFetch = Safenetwork.fetch.bind(Safenetwork) // Hook for rdflib Fetcher
+$rdf.appFetch = safeJs.fetch.bind(safeJs) // Hook for rdflib Fetcher
 
 // WebID authentication and signup
 var Solid = Solid || {};
@@ -539,6 +539,7 @@ Solid.web = (function(window) {
         if (response.status === 200 || response.status === 201) {
           return parseResponseMeta(response);
         }
+        throw new Error(response.statusText)
       });
     };
 

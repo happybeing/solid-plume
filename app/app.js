@@ -348,16 +348,16 @@ var plumeConfig = {};
         if (response.ok)
             parseResponseMeta(response)
         else {
-          let publicName = Safenetwork.hostpart(postsURL)
+          let publicName = safeJs.hostpart(postsURL)
           try {
             // Ensure public name exists
-             Safenetwork.createPublicName(publicName)
+             safeJs.createPublicName(publicName)
           } catch (err) {
             // Assume error means it exists
             console.log("safe:plume public name '"+publicName+"'exists")
           }
 
-           Safenetwork.setupServiceOnHost(publicName,Safenetwork.SN_SERVICEID_LDP)
+           safeJs.setupServiceOnHost(publicName,safeJs.SN_SERVICEID_LDP)
         }
 
       } catch(err){
@@ -451,11 +451,11 @@ console.log('safe:plume DEBUG URLc: ', window.location.href)
     var login = async function() {
         // For local testing
         if (plumeConfig.owner && plumeConfig.owner.webid){
-//          if (!Safenetwork.isAuthorised()){
+//          if (!safeJs.isAuthorised()){
             if (!hasSafeInitialised)
               hasSafeInitialised = await initialiseSafeLDP(plumeConfig.postsURL)
 
-            if (Safenetwork.isAuthorised())
+            if (safeJs.isAuthorised())
               gotWebID(plumeConfig.owner.webid)
             //notify('error', "Authentication disabled - using localhost WebID");
 //          }
@@ -963,6 +963,8 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         Solid.web.put(docURI, triples)
         .then(
             function(res) {
+                if (res.url === undefined) res.url = docURI
+
                 // all done, clean up and go to initial state
                 if (['http','safe'].indexOf(res.url.slice(0,4)) >= 0) {
                     res.url = plumeConfig.postsURL.slice(0, plumeConfig.postsURL.lastIndexOf('/') + 1)+slug;
@@ -1765,9 +1767,9 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
                     plumeConfig = data.config;
                     user = data.user;
                     if (user.authenticated) {
-                        if (!Safenetwork.isAuthorised()) {
+                        if (!safeJs.isAuthorised()) {
                           console.log('safe:plume AUTH simpleAuthorise()')
-                          Safenetwork.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
+                          safeJs.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
                         }
                         hideLogin();
                     }
@@ -1924,33 +1926,33 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
       console.log("safe:plume initialiseSafeLDP('"+postsURL+"')")
 
       try {
-        if (!Safenetwork.isAuthorised()) {
+        if (!safeJs.isAuthorised()) {
           console.log('safe:plume AUTH simpleAuthorise()')
-          await Safenetwork.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
+          await safeJs.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
         }
 
-        if (await Safenetwork.getServiceForUri(postsURL)){
+        if (await safeJs.getServiceForUri(postsURL)){
           return true
         }
         else {
           // LDP service not present, so set it up
 
-          let publicName = Safenetwork.hostpart(postsURL)
+          let publicName = safeJs.hostpart(postsURL)
           try {
             // Ensure public name exists
-            await Safenetwork.createPublicName(publicName)
+            await safeJs.createPublicName(publicName)
           } catch (err) {
             // Assume error means it exists
             console.log("safe:plume public name '"+publicName+"'exists")
             return undefined
           }
 
-           await Safenetwork.setupServiceOnHost(publicName,Safenetwork.SN_SERVICEID_LDP)
+           await safeJs.setupServiceOnHost(publicName,safeJs.SN_SERVICEID_LDP)
            return true
         }
 
       } catch(err){
-        console.log("initaliseSafeLDP error: "+err)
+        console.log("initialiseSafeLDP error: " + err)
         return undefined
       }
 
@@ -1987,7 +1989,7 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
           // Logged in mode
           try {
             console.log('safe:plume AUTH simpleAuthorise()')
-            await Safenetwork.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
+            await safeJs.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
             // TODO at this point (or somewhere else) check we have required SAFE access
             user = plumeConfig.owner
             user.webid = decodeURIComponent(queryVals['author'])
@@ -2002,9 +2004,9 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
           }
         }
         else {
-          if (!Safenetwork.isConnected()) {
+          if (!safeJs.isConnected()) {
             console.log('safe:plume AUTH initReadOnly()')
-            await Safenetwork.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
+            await safeJs.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
           }
           showLogin()
         }
@@ -2053,9 +2055,9 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
 
       if (!useHardConfig) {
         // Must connect to access safe: URIs
-        if (!Safenetwork.isConnected()) {
+        if (!safeJs.isConnected()) {
           console.log('safe:plume AUTH initReadOnly()')
-          await Safenetwork.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
+          await safeJs.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
         }
 
         let configFile = appURL + 'config.json'

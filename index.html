@@ -154,12 +154,11 @@
 <script src="js/dropdown.js"></script>
 
 <!-- Plume for Safe Network uses a SAFE fork of rdflib (with very minor mods),
-plus this SAFE web api that provides a RESTful LDP i/f via window.fetch
-and rdflib.js Fetcher.js. So to access SAFE a Solid app must use fetch or
-Fetcher.js and not XmlHttpRequest etc. -->
+plus SafenetworkJS, which provides a RESTful LDP i/f to SAFE storage via
+window.fetch and rdflib.js Fetcher.js. So to access SAFE a Solid app must use
+fetch or Fetcher.js and not XmlHttpRequest etc. -->
 <script src="js/rdflib.min.js"></script>
-<script src="js/safenetwork-webapi.js"></script>
-
+<script src="js/safenetworkjs.js"></script>
 <script src="app/solid.js"></script>
 <script src="app/app.js"></script>
 </body>
