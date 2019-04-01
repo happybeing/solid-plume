@@ -124,7 +124,7 @@ const solidConfig = {
     storage:  'safe://solid.happybeing'                 // Public read/write solid service
 }
 
-// Default SAFE Auth permissions to request. Optional parameter to simpleAuthorise()
+// Default SAFE Auth permissions to request. Optional parameter to initAuthorised()
 const appPermissions = {
   // TODO is this right for solid service container (ie solid.<safepublicid>)
   _public:      ['Read', 'Insert', 'Update', 'Delete'], // request to insert into `_public` container
@@ -137,6 +137,11 @@ const appPermissions = {
 
 var Plume = Plume || {};
 var plumeConfig = {};
+var defaultSafeAppConfig = {
+  "id":     "com.theWebalyst.plume",
+  "name":   "SAFE Plume",
+  "vendor": "com.theWebalyst"
+};
 
 ( async function () {
     'use strict';
@@ -1764,18 +1769,22 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
                 // don't let session data become stale (24h validity)
                 var dateValid = data.config.saveDate + 1000 * 60 * 60 * 24;
                 if (Date.now() < dateValid) {
-                    plumeConfig = data.config;
-                    user = data.user;
-                    if (user.authenticated) {
-                        if (!safeJs.isAuthorised()) {
-                          console.log('safe:plume AUTH simpleAuthorise()')
-                          safeJs.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
-                        }
+                  plumeConfig = data.config;
+                  user = data.user;
+                  if (user.authenticated && !safeJs.isAuthorised()) {
+                      console.log('safe:plume AUTH initAuthorised()')
+                      safeJs.initAuthorised(safeAppConfig(), appPermissions)
+                      .then((safeApp) => {
+                      if (safeJs.isAuthorised()) {
                         hideLogin();
-                    }
-                    if (isOwner()) {
-                        showNewPostButton();
-                    }
+                        if (isOwner()) {
+                            showNewPostButton();
+                        }
+                      } else {
+                        showLogin()
+                      }
+                    })
+                  }
                 } else {
                     console.log("Deleting localStorage data because it expired");
                     localStorage.removeItem(appURL);
@@ -1878,6 +1887,14 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
          if (hasSafeInitialised === undefined){
             hasSafeInitialised = false  // Prevent async second call to initialiseSafeLDP() from applyConfig()
             hasSafeInitialised = await initialiseSafeLDP(plumeConfig.postsURL)
+            if (safeJs.isAuthorised()) {
+              hideLogin();
+              if (isOwner()) {
+                  showNewPostButton();
+              }
+            } else {
+              showLogin()
+            }
          }
          if (hasSafeInitialised) {
            user = configData.owner
@@ -1927,8 +1944,8 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
 
       try {
         if (!safeJs.isAuthorised()) {
-          console.log('safe:plume AUTH simpleAuthorise()')
-          await safeJs.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
+          console.log('safe:plume AUTH initAuthorised()')
+          await safeJs.initAuthorised(safeAppConfig(), appPermissions)
         }
 
         if (await safeJs.getServiceForUri(postsURL)){
@@ -1988,16 +2005,19 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         if (queryVals['author'] !== undefined) {
           // Logged in mode
           try {
-            console.log('safe:plume AUTH simpleAuthorise()')
-            await safeJs.simpleAuthorise(plumeConfig.safeAppConfig,appPermissions)
-            // TODO at this point (or somewhere else) check we have required SAFE access
-            user = plumeConfig.owner
-            user.webid = decodeURIComponent(queryVals['author'])
-            user.authenticated = true
-            console.log('safe:plume DEBUG user.authenticated:', user.authenticated)
-            console.log('safe:plume DEBUG user.webid:', user.webid)
-            hideLogin()
-            showNewPostButton()
+            console.log('safe:plume AUTH initAuthorised()')
+            if (await safeJs.initAuthorised(safeAppConfig(), appPermissions)) {
+              // TODO at this point (or somewhere else) check we have required SAFE access
+              user = plumeConfig.owner
+              user.webid = decodeURIComponent(queryVals['author'])
+              user.authenticated = true
+              console.log('safe:plume DEBUG user.authenticated:', user.authenticated)
+              console.log('safe:plume DEBUG user.webid:', user.webid)
+              hideLogin()
+              showNewPostButton()
+            } else {
+              showLogin()
+            }
           } catch (err) {
             // TODO remove author param?
             showLogin()
@@ -2005,8 +2025,8 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         }
         else {
           if (!safeJs.isConnected()) {
-            console.log('safe:plume AUTH initReadOnly()')
-            await safeJs.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
+            console.log('safe:plume AUTH initUnauthorised()')
+            await safeJs.initUnauthorised(safeAppConfig()) // Blog visitor mode
           }
           showLogin()
         }
@@ -2044,6 +2064,10 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
         }
     };
 
+    function safeAppConfig() {
+      return plumeConfig.safeAppConfig ? plumeConfig.safeAppConfig : defaultSafeAppConfig
+    }
+
     // ----- INIT -----
     // start app by loading the config file
     async function initPlume () {
@@ -2056,8 +2080,8 @@ console.log('plume:DEBUG profile.picture: ', profile.picture)
       if (!useHardConfig) {
         // Must connect to access safe: URIs
         if (!safeJs.isConnected()) {
-          console.log('safe:plume AUTH initReadOnly()')
-          await safeJs.initReadOnly(plumeConfig.safeAppConfig) // Blog visitor mode
+          console.log('safe:plume AUTH initUnauthorised()')
+          await safeJs.initUnauthorised(safeAppConfig()) // Blog visitor mode
         }
 
         let configFile = appURL + 'config.json'
