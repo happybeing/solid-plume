@@ -5,8 +5,8 @@ var Plume = Plume || {};
 Plume = (function () {
     'use strict';
 
-//    const popupUri = window.origin + '/common/popup.html'
-    const popupUri = 'https://solid.openlinksw.com:8444/common/popup.html'
+    const popupUri = window.origin + '/common/popup.html'
+//    const popupUri = 'https://solid.openlinksw.com:8444/common/popup.html'
 
     var config = Plume.config || {
          "owners": [],
@@ -31,6 +31,7 @@ Plume = (function () {
     Solid.fetch = SolidAuthClient.fetch;
     $rdf.Fetcher.crossSiteProxyTemplate = PROXY;
     // common vocabs
+    var XSD = $rdf.Namespace("http://www.w3.org/2001/XMLSchema#")
     var RDF = $rdf.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#");
     var FOAF = $rdf.Namespace("http://xmlns.com/foaf/0.1/");
     var DCT = $rdf.Namespace("http://purl.org/dc/terms/");
@@ -56,9 +57,9 @@ Plume = (function () {
       loggedHref.title = ''
     }
   }
-    
-    
-    
+
+
+
     // init markdown editor
     var editor = new SimpleMDE({
         status: false,
@@ -185,7 +186,7 @@ Plume = (function () {
     // Set default config values
     var applyConfig = function(configData) {
         // loaded config from file
-        config.defaultPath = 'posts';
+        config.defaultPath = 'public/posts';
         if (configData) {
             config = configData;
             // append trailing slash to data path if missing
@@ -216,7 +217,7 @@ Plume = (function () {
             config.defaultPath += '/';
         }
         if (!config.postsURL || config.postsURL.length === 0) {
-            config.postsURL = appURL + config.defaultPath;
+            config.postsURL = user.pim + (user.pim.substring(user.pim.length-1) !== '/' ? '/' : '') + config.defaultPath;
         }
 
         config.loadInBg = true;
@@ -224,23 +225,48 @@ Plume = (function () {
 
     // show a particular blog
     var showBlog = function(url) {
-        // show loading
-        if (!config.loadInBg) {
-            showLoading();
+      // Check if storage is found
+      fetch(url,{method:'HEAD'}).then((response) => {
+        console.log('HEAD response: %O',response)
+
+        if (response.status === 200) {
+            // show loading
+            if (!config.loadInBg) {
+                showLoading();
+            }
+            fetchPosts(url);
+        } else {
+          // Offer to initialise the blog
+          resetAll();
+          hideLoading();
+          if (user.authenticated && isOwner()) {
+              initContainer(url);
+              document.querySelector('.start').classList.remove('hidden');
+          } else {
+              document.querySelector('.init').classList.remove('hidden');
+          }
         }
-        fetchPosts(url);
+      })
+      console.log('safe:plume DEBUG URLf: ', window.location.href)
     };
 
     // Init data container
     var initContainer = function(url) {
         Solid.web.head(url).then(
             function(container) {
-                // create data container for posts if it doesn't exist
-                if (!container.exists && container.xhr.status < 500) {
-                    Solid.web.post(appURL, config.defaultPath, null, true).then(
+                if (container.exists) {
+                    config.postsURL = url;
+                    fetchPosts(url);
+                } else if (container.xhr.status < 500) {
+                    // try to create container for posts in user's POD
+                    const slug = url.slice(url.lastIndexOf('/') + 1)
+                    const parent = url.substring(0,url.length-slug.length)
+                    const isContainer = true
+                    Solid.web.post(parent, slug, null, true).then(
                         function(res) {
                             if (res.url && res.url.length > 0) {
-                                config.postsURL = res.url;
+                                const arr = url.split('/');
+                                config.postsURL = arr[0] + '//' + arr[2] + res.url;
                             }
                             // add dummy post
                             var acme = {
@@ -263,9 +289,6 @@ Plume = (function () {
                             notify('error', 'Could not create data container');
                         }
                     );
-                } else if (container.exists) {
-                    config.postsURL = appURL+config.defaultPath;
-                    fetchPosts(url);
                 }
             }
         );
@@ -328,7 +351,7 @@ Plume = (function () {
             try
             {
               var http = new XMLHttpRequest();
-              http.open('get', user.pim+'plume/config.json');
+              http.open('get', appURL + 'config.json');
               http.onreadystatechange = function() {
                 if (this.readyState == this.DONE) {
                   applyConfig(JSON.parse(this.response));
@@ -709,17 +732,20 @@ Plume = (function () {
     // save post data to server
     var savePost = function(post, url) {
         //TODO also write tags - use sioc:topic -> uri
-        var XSD = $rdf.Namespace("http://www.w3.org/2001/XMLSchema#")
-        var g = new $rdf.graph();
-        var slug;
-        var GRAPH;
 
+        var slug = makeSlug(post.title);
+        var docURI
         if (!url) {
-          GRAPH = $rdf.Namespace(config.postsURL + makeSlug(post.title) + '.ttl');
+            // Prefix to prevent overwriting existing post with same title
+            slug = Date.now() + '-' + slug
+            docURI = config.postsURL + slug;
         } else {
-          GRAPH = $rdf.Namespace(url);
+            slug = url.slice(url.lastIndexOf('/') + 1)
+            docURI = url;
         }
 
+        const GRAPH = $rdf.Namespace(docURI);
+        var g = new $rdf.graph();
         g.add(GRAPH('#'), RDF('type'), SIOC('Post'));
         g.add(GRAPH('#'), DCT('title'), $rdf.lit(post.title));
         g.add(GRAPH('#'), SIOC('has_creator'), GRAPH('#author'));
@@ -736,17 +762,13 @@ Plume = (function () {
 
         var triples = new $rdf.Serializer(g).toN3(g);
 
-        if (url) {
-            var writer = Solid.web.put(url, triples);
-        } else {
-            var slug = makeSlug(post.title);
-            var writer = Solid.web.post(config.postsURL, slug, triples);
-        }
-        writer.then(
+        Solid.web.put(docURI, triples).then(
             function(res) {
+                if (res.url === undefined) res.url = docURI
+
                 // all done, clean up and go to initial state
                 if (res.url.slice(0,4) !== 'http') {
-                    res.url = config.postsURL.slice(0, config.postsURL.lastIndexOf('/') + 1)+slug + '.ttl';
+                    res.url = config.postsURL.slice(0, config.postsURL.lastIndexOf('/') + 1)+slug;
                 }
                 cancelPost('?post='+encodeURIComponent(res.url));
             }
@@ -1360,7 +1382,7 @@ Plume = (function () {
                     replace(/-*$/, '').
                     replace(/[^A-Za-z0-9-]/g, '').
                     toLowerCase();
-//??        str += '.ttl';
+        str += '.ttl';
 	return str;
     };
 
@@ -1427,7 +1449,7 @@ Plume = (function () {
             }
         }
 
-        
+
         if (refresh) {
             showBlog(config.postsURL);
         } else {
@@ -1569,19 +1591,16 @@ Plume = (function () {
 
 
     // ----- INIT -----
-    // start app by loading the config file
+    // Loading Plume config from browser storage, then from config.json
     applyConfig();
-    init(config);
-/**
     var http = new XMLHttpRequest();
-    http.open('get', '/plume/config.json');
+    http.open('get', appURL + '/config.json');
     http.onreadystatechange = function() {
         if (this.readyState == this.DONE) {
             init(JSON.parse(this.response));
         }
     };
     http.send();
-**/
 
 
     // return public functions
@@ -1674,4 +1693,3 @@ Plume.menu = (function() {
     }
 })();
 Plume.menu.init();
-

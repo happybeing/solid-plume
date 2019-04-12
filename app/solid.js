@@ -31,6 +31,8 @@ https://github.com/solid/
 
 */
 
+// const fetch = Safenetworkjs.protoFetch
+
 // Identity / WebID
 var Solid = Solid || {};
 Solid.fetch = fetch;
@@ -205,6 +207,8 @@ Solid.utils = (function(window) {
 
     // parse a Link header
     var parseLinkHeader = function(link) {
+        if (!link) return undefined
+
         var linkexp = /<[^>]*>\s*(\s*;\s*[^\(\)<>@,;:"\/\[\]\?={} \t]+=(([^\(\)<>@,;:"\/\[\]\?={} \t]+)|("[^"]*")))*(,|$)/g;
         var paramexp = /[^\(\)<>@,;:"\/\[\]\?={} \t]+=(([^\(\)<>@,;:"\/\[\]\?={} \t]+)|("[^"]*"))/g;
 
@@ -256,15 +260,17 @@ Solid.web = (function(window) {
     // return metadata for a given request
     var parseResponseMeta = function(resp) {
         var headers = resp.headers;
-        var h = Solid.utils.parseLinkHeader(headers.get('Link'));
         var meta = {};
-        meta.url = (headers.has('Location'))?headers.get('Location'):resp.url;
-        meta.acl = h['acl'];
-        meta.meta = (h['meta'])?h['meta']:h['describedBy'];
-        meta.user = (headers.has('User'))?headers.get('User'):'';
-        meta.websocket = (headers.has('Updates-Via'))?headers.get('Updates-Via'):'';
+        var link = Solid.utils.parseLinkHeader(headers.get('Link'))
+        if (link) {
+          meta.acl = link['acl'];
+          meta.meta = link['meta'] ? link['meta'] : link['describedBy'];
+        }
+        meta.url = headers.has('Location') ? headers.get('Location') : resp.url;
+        meta.user = headers.has('User') ? headers.get('User') : '';
+        meta.websocket = headers.has('Updates-Via') ? headers.get('Updates-Via') : '';
         meta.exists = false;
-        meta.exists = (resp.status === 200)?true:false;
+        meta.exists = resp.status === 200 ? true : false;
         meta.xhr = resp;
         return meta;
     };
@@ -272,8 +278,11 @@ Solid.web = (function(window) {
     // check if a resource exists and return useful Solid info (acl, meta, type, etc)
     // resolve(metaObj)
     var head = function(url) {
-        return Solid.fetch(url, {method: 'HEAD' })
-          .then((resp) => parseResponseMeta(resp))
+        return fetch(url,{method:'HEAD'}).then((response) => {
+          // let result = response;
+          // if (response.ok)
+            return parseResponseMeta(response);
+        });
     };
 
     // fetch an RDF resource
@@ -300,13 +309,13 @@ Solid.web = (function(window) {
     // resolve(metaObj) | reject
     var post = function(url, slug, data, isContainer) {
         var resType = (isContainer)?LDP('BasicContainer').uri:LDP('Resource').uri;
-        var init = { 
+        var init = {
                     method: 'POST',
                     headers : {
                        'Content-Type': 'text/turtle',
                        'Link': '<'+resType+'>; rel="type"'
                     },
-                    credentials: 'include', 
+                    credentials: 'include',
                    }
         if (slug && slug.length > 0) {
           init.headers['Slug'] = slug;
@@ -317,25 +326,25 @@ Solid.web = (function(window) {
 
         var promise = Solid.fetch(url, init)
                .then((resp) => {
-                  if (resp.status === 200 || resp.status === 201) {  
-                    return Promise.resolve(parseResponseMeta(resp))  
-                  } else {  
+                  if (resp.status === 200 || resp.status === 201) {
+                    return Promise.resolve(parseResponseMeta(resp))
+                  } else {
                     return Promise.reject({status: resp.status, msg: resp.statusText})
-                  }  
+                  }
                })
         return promise;
     };
 
-    
+
     // update/create resource using HTTP PUT
     // resolve(metaObj) | reject
     var put = function(url, data) {
-        var init = { 
+        var init = {
                     method: 'PUT',
                     headers : {
                        'Content-Type': 'text/turtle',
                     },
-                    credentials: 'include', 
+                    credentials: 'include',
                    }
         if (data && data.length > 0) {
           init['body'] = data;
@@ -343,11 +352,11 @@ Solid.web = (function(window) {
 
         var promise = Solid.fetch(url, init)
                .then((resp) => {
-                  if (resp.status === 200 || resp.status === 201) {  
-                    return Promise.resolve(parseResponseMeta(resp))  
-                  } else {  
+                  if (resp.status === 200 || resp.status === 201) {
+                    return Promise.resolve(parseResponseMeta(resp))
+                  } else {
                     return Promise.reject({status: resp.status, msg: resp.statusText})
-                  }  
+                  }
                })
         return promise;
     };
@@ -355,17 +364,17 @@ Solid.web = (function(window) {
     // delete a resource
     // resolve(true) | reject
     var del = function(url) {
-        var init = { 
+        var init = {
                     method: 'DELETE',
-                    credentials: 'include', 
+                    credentials: 'include',
                    }
         var promise = Solid.fetch(url, init)
                .then((resp) => {
-                  if (resp.status === 200) {  
-                    return Promise.resolve(true)  
-                  } else {  
+                  if (resp.status === 200) {
+                    return Promise.resolve(true)
+                  } else {
                     return Promise.reject({status: resp.status, msg: resp.statusText})
-                  }  
+                  }
                })
         return promise;
     }
