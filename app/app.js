@@ -178,7 +178,7 @@ Plume = (function () {
             if (config.postsURL && config.postsURL.length > 0) {
                 showBlog(config.postsURL);
             } else {
-                showInitDialog();
+                // TODO? showInitDialog();
             }
         }
     };
@@ -216,7 +216,7 @@ Plume = (function () {
         if (config.defaultPath.lastIndexOf('/') < 0) {
             config.defaultPath += '/';
         }
-        if (!config.postsURL || config.postsURL.length === 0) {
+        if ((!config.postsURL || config.postsURL.length === 0) && user.pim) {
             config.postsURL = user.pim + (user.pim.substring(user.pim.length-1) !== '/' ? '/' : '') + config.defaultPath;
         }
 
@@ -252,6 +252,9 @@ Plume = (function () {
 
     // Init data container
     var initContainer = function(url) {
+        if (url.lastIndexOf('/') === url.length-1) {
+            url = url.substring(0, url.length-1)
+        }
         Solid.web.head(url).then(
             function(container) {
                 if (container.exists) {
@@ -267,7 +270,9 @@ Plume = (function () {
                             if (res.url && res.url.length > 0) {
                                 const arr = url.split('/');
                                 config.postsURL = arr[0] + '//' + arr[2] + res.url;
+                                return saveConfig()
                             }
+                          }).then( function() {
                             // add dummy post
                             var acme = {
                                 title: "Welcome to Plume, a Solid blogging platform",
@@ -294,10 +299,27 @@ Plume = (function () {
         );
     }
 
+    var saveConfig = function() {
+        let configURI = appURL + 'config.txt'
+        let data = JSON.stringify(config, null, 4)
+        let promise = Solid.web.put(configURI, data, 'text/plain').then(
+            function(res) {
+            }
+        )
+        .catch(
+            function(err) {
+                console.log("Failed to save " + configURI);
+                console.log(err);
+                notify('error', 'Failed to save config file');
+            }
+        );
+        return promise
+    };
+
     // Log user in
     var login = function() {
         // Get the current user
-      SolidAuthClient
+        SolidAuthClient
         .popupLogin({ popupUri })
         .then((session) => {
            if (session) {
@@ -351,7 +373,7 @@ Plume = (function () {
             try
             {
               var http = new XMLHttpRequest();
-              http.open('get', appURL + 'config.json');
+              http.open('get', appURL + 'config.txt');
               http.onreadystatechange = function() {
                 if (this.readyState == this.DONE) {
                   applyConfig(JSON.parse(this.response));
@@ -738,7 +760,8 @@ Plume = (function () {
         if (!url) {
             // Prefix to prevent overwriting existing post with same title
             slug = Date.now() + '-' + slug
-            docURI = config.postsURL + slug;
+            docURI = config.postsURL +
+              (config.postsURL.charAt(config.postsURL.length) !== '/' ? '/' : '') + slug;
         } else {
             slug = url.slice(url.lastIndexOf('/') + 1)
             docURI = url;
@@ -766,10 +789,12 @@ Plume = (function () {
             function(res) {
                 if (res.url === undefined) res.url = docURI
 
-                // all done, clean up and go to initial state
-                if (res.url.slice(0,4) !== 'http') {
-                    res.url = config.postsURL.slice(0, config.postsURL.lastIndexOf('/') + 1)+slug;
+                // ensure we have a URI
+                if (!res.url.match(/^[a-zA-Z]+\:\/\/.*$/)) {
+                    res.url = config.postsURL +
+                      (config.postsURL.charAt(config.postsURL.length) !== '/' ? '/' : '') + slug;
                 }
+                // all done, clean up and go to initial state
                 cancelPost('?post='+encodeURIComponent(res.url));
             }
         )
@@ -1591,10 +1616,10 @@ Plume = (function () {
 
 
     // ----- INIT -----
-    // Loading Plume config from browser storage, then from config.json
+    // Loading Plume config from browser storage, then from config.txt
     applyConfig();
     var http = new XMLHttpRequest();
-    http.open('get', appURL + '/config.json');
+    http.open('get', appURL + '/config.txt');
     http.onreadystatechange = function() {
         if (this.readyState == this.DONE) {
             init(JSON.parse(this.response));

@@ -338,11 +338,12 @@ Solid.web = (function(window) {
 
     // update/create resource using HTTP PUT
     // resolve(metaObj) | reject
-    var put = function(url, data) {
+    var put = function(url, data, type) {
+        let contentType = type || 'text/turtle'
         var init = {
                     method: 'PUT',
                     headers : {
-                       'Content-Type': 'text/turtle',
+                       'Content-Type': contentType,
                     },
                     credentials: 'include',
                    }
