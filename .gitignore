@@ -1,3 +1,5 @@
 .DS_Store
+.acl
+config.txt
 config.json
 posts/
