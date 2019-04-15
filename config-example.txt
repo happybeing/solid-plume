@@ -1,0 +1,15 @@
+{
+    "owners": [
+        "https://thewebalyst.solid.community/profile/card#me"
+    ],
+    "title": "Plume (sac-smalinin)",
+    "tagline": "Light as a feather",
+    "picture": "img/logo.svg",
+    "fadeText": true,
+    "showSources": true,
+    "cacheUnit": "days",
+    "defaultPath": "public/posts",
+    "postsURL": "",
+    "postsElement": ".posts",
+    "loadInBg": true
+}
