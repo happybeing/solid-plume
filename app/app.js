@@ -5,9 +5,6 @@ var Plume = Plume || {};
 Plume = (function () {
     'use strict';
 
-    const popupUri = window.origin + '/common/popup.html'
-//    const popupUri = 'https://solid.openlinksw.com:8444/common/popup.html'
-
     var config = Plume.config || {
          "owners": [],
          "title": "Plume",
@@ -20,6 +17,9 @@ Plume = (function () {
          "postsURL": ""
     };
     var appURL = window.location.origin+window.location.pathname;
+    const popupUri = appURL + '/popup.html'
+//  const popupUri = window.origin + '/common/popup.html'
+
 
     // RDF
 //    var PROXY = window.origin + '/proxy?uri={uri}';
@@ -28,7 +28,7 @@ Plume = (function () {
 
     Solid.config.proxyUrl = PROXY;
     Solid.config.timeout = TIMEOUT;
-    Solid.fetch = SolidAuthClient.fetch;
+    Solid.fetch = solid.auth.fetch;
     $rdf.Fetcher.crossSiteProxyTemplate = PROXY;
     // common vocabs
     var XSD = $rdf.Namespace("http://www.w3.org/2001/XMLSchema#")
@@ -119,7 +119,7 @@ Plume = (function () {
         applyConfig(configData);
 
     // Render the session state
-    SolidAuthClient
+    solid.auth
       .currentSession()
       .then((session) => {
          if (session) {
@@ -178,7 +178,7 @@ Plume = (function () {
             if (config.postsURL && config.postsURL.length > 0) {
                 showBlog(config.postsURL);
             } else {
-                // TODO? showInitDialog();
+                document.querySelector('.init').classList.remove('hidden');
             }
         }
     };
@@ -275,10 +275,10 @@ Plume = (function () {
                           }).then( function() {
                             // add dummy post
                             var acme = {
-                                title: "Welcome to Plume, a Solid blogging platform",
+                                title: "Welcome to Plume",
                                 author: user.webid,
-                                date: "3 Dec 2015",
-                                body: "```\nHellowWorld();\n```\n\n**Note!** This is a demo post created under your name. Feel free to remove it whenever you wish.\n\n*Plume* is a 100% client-side application built using [Solid standards](https://github.com/solid/), in which data is decoupled from the application itself. This means that you can host the application on any Web server, without having to install anything -- no database, no messing around with Node.js, it has 0 dependencies! It also means that other similar applications will be able to reuse the data resulting from your posts, without having to go through a complicated API.\n\nPlume uses [Markdown](https://en.wikipedia.org/wiki/Markdown) to provide you with the easiest and fastest experience for writing beautiful articles. Click the *Edit* button below to see this article.\n\nGive it a try, write your first post!",
+                                created: "2019-04-16T12:40:02+00:00",
+                                body: "*Plume* is a blogging platform for [Solid](https://solid.mit.edu/), a project that gives you full ownership and control over your data: the blog posts which you publish with Plume.\n\nPlume stores posts as Linked Data so that other Solid applications can understand, use, and even edit Plume blog posts.\n\nYou create posts in an easy to use text format called [Markdown](https://en.wikipedia.org/wiki/Markdown) which helps with text formatting such as heaings, paragraphs and lists as well as text styles. Click the *Edit* button below to see this article and edit it in Markdown format. The editor has toolbar buttons to help you format your post by inserting Markdown sequenses for you.\n\nTo create a new post, use the menu (top left).\n\n**Note!** This is a demo post created under your name. Feel free to remove it using the 'Delete' button below.",
                                 tags: [
                                     { color: "#df2d4f", name: "Decentralization" },
                                     { color: "#4d85d1", name: "Solid" }
@@ -319,7 +319,7 @@ Plume = (function () {
     // Log user in
     var login = function() {
         // Get the current user
-        SolidAuthClient
+        solid.auth
         .popupLogin({ popupUri })
         .then((session) => {
            if (session) {
@@ -347,7 +347,7 @@ Plume = (function () {
         user = defaultUser;
         clearLocalStorage();
         showLogin();
-        SolidAuthClient
+        solid.auth
           .logout()
           .then(() => {
             window.location.reload();
@@ -375,13 +375,15 @@ Plume = (function () {
               var http = new XMLHttpRequest();
               http.open('get', appURL + 'config.txt');
               http.onreadystatechange = function() {
-                if (this.readyState == this.DONE) {
+                if (this.readyState === this.DONE) {
                   applyConfig(JSON.parse(this.response));
                 }
               };
               http.send();
 
-            } catch(e) { console.log(e); }
+            } catch(e) {
+              console.log(e);
+            }
 
 
             // add self to authors list
@@ -761,7 +763,7 @@ Plume = (function () {
             // Prefix to prevent overwriting existing post with same title
             slug = Date.now() + '-' + slug
             docURI = config.postsURL +
-              (config.postsURL.charAt(config.postsURL.length) !== '/' ? '/' : '') + slug;
+              (config.postsURL.charAt(config.postsURL.length-1) !== '/' ? '/' : '') + slug;
         } else {
             slug = url.slice(url.lastIndexOf('/') + 1)
             docURI = url;
@@ -792,7 +794,7 @@ Plume = (function () {
                 // ensure we have a URI
                 if (!res.url.match(/^[a-zA-Z]+\:\/\/.*$/)) {
                     res.url = config.postsURL +
-                      (config.postsURL.charAt(config.postsURL.length) !== '/' ? '/' : '') + slug;
+                      (config.postsURL.charAt(config.postsURL.length-1) !== '/' ? '/' : '') + slug;
                 }
                 // all done, clean up and go to initial state
                 cancelPost('?post='+encodeURIComponent(res.url));
@@ -1619,9 +1621,9 @@ Plume = (function () {
     // Loading Plume config from browser storage, then from config.txt
     applyConfig();
     var http = new XMLHttpRequest();
-    http.open('get', appURL + '/config.txt');
+    http.open('get', appURL + 'config.txt');
     http.onreadystatechange = function() {
-        if (this.readyState == this.DONE) {
+        if (this.readyState === this.DONE) {
             init(JSON.parse(this.response));
         }
     };
