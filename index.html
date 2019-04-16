@@ -21,7 +21,7 @@
                 <img src="img/logo-white.svg" alt="Edit post">New post</a>
                 <h1 class="menu-separator"></h1>
             </li>
-            <li class="login"><a href="#" onclick="Plume.login()">Login</a></li>
+            <li class="login"><a href="#" onclick="Plume.login()">Author Login</a></li>
             <li class="logout hidden"><a href="#" onclick="Plume.logout()">Logout</a></li>
             <!-- <li class=""><a href="#" onclick="Plume.signup()">Signup</a></li> -->
 
@@ -104,14 +104,7 @@
 
             <!-- Init -->
             <div class="init center-text hidden">
-                <h1>Could not find any blog's posts.</h1>
-                <h1>You have to Login for write a new post.</h1>
-<!--
-                <p>If you would like, Plume can attempt to find your blog, or help you create one.</p>
-                <p>Do you use WebID? <a href="#" onclick="Plume.toggleOverlay('#webid-info')">[<span class="fa fa-question"></span>]</a></p>
-                <a class="action-button" href="#" onclick="Plume.login()" title="I use WebID">Yes, I use WebID</a>
-                <a class="action-button" href="#" onclick="Plume.signup()" title="Sign up for a WebID">No, I need a WebID</a>
--->
+                <h1>To begin, Login as author (top left menu).</h1>
             </div>
 
             <!-- Errors -->
@@ -166,6 +159,7 @@
 <script src="js/simplemde.min.js"></script>
 <script src="js/moment.min.js"></script>
 <script src="js/dropdown.js"></script>
+<script src="js/solid-auth-client.bundle.js"></script>
 <script src="js/rdflib.min.js"></script>
 <script src="app/solid.js"></script>
 <script src="app/app.js"></script>
