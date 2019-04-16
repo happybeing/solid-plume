@@ -1,6 +1,6 @@
 {
     "owners": [
-        "https://thewebalyst.solid.community/profile/card#me"
+        "https://localhost:8443/profile/card#me"
     ],
     "title": "Plume (sac-smalinin)",
     "tagline": "Light as a feather",
