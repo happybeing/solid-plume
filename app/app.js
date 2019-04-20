@@ -270,7 +270,7 @@ Plume = (function () {
                             if (res.url && res.url.length > 0) {
                                 const arr = url.split('/');
                                 config.postsURL = arr[0] + '//' + arr[2] + res.url;
-                                return saveConfig()
+                                // return saveConfig() disabled to avoid need for configuring an access control file
                             }
                           }).then( function() {
                             // add dummy post
@@ -299,6 +299,7 @@ Plume = (function () {
         );
     }
 
+    // saveConfig() disabled to avoid need for configuring an access control file
     var saveConfig = function() {
         let configURI = appURL + 'config.txt'
         let data = JSON.stringify(config, null, 4)
