@@ -278,7 +278,7 @@ Solid.web = (function(window) {
     // check if a resource exists and return useful Solid info (acl, meta, type, etc)
     // resolve(metaObj)
     var head = function(url) {
-        return fetch(url,{method:'HEAD'}).then((response) => {
+        return Solid.fetch(url,{method:'HEAD'}).then((response) => {
           // let result = response;
           // if (response.ok)
             return parseResponseMeta(response);

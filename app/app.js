@@ -226,10 +226,10 @@ Plume = (function () {
     // show a particular blog
     var showBlog = function(url) {
       // Check if storage is found
-      fetch(url,{method:'HEAD'}).then((response) => {
+      Solid.fetch(url,{method:'HEAD'}).then((response) => {
         console.log('HEAD response: %O',response)
 
-        if (response.status === 200) {
+        if (response.ok) {
             // show loading
             if (!config.loadInBg) {
                 showLoading();
@@ -370,40 +370,39 @@ Plume = (function () {
             user.date = Date.now();
             user.pim = profile.pim;
 
-            try
-            {
-              var http = new XMLHttpRequest();
-              http.open('get', appURL + 'config.txt');
-              http.onreadystatechange = function() {
-                if (this.readyState === this.DONE) {
-                  applyConfig(JSON.parse(this.response));
+            Solid.fetch(appURL + 'config.txt',{method:'GET'})
+            .then((response) => {
+                if (response.ok) {
+                    response.json().then((json) => {
+                        applyConfig(json);
+                    }).catch((err) => {
+                        throw new Error('Invalid config.txt: ' + response.statusText);
+                    });
+                } else {
+                    throw new Error('Failed to load config.txt: ' + response.statusText);
                 }
-              };
-              http.send();
 
-            } catch(e) {
-              console.log(e);
-            }
-
-
-            // add self to authors list
-            authors[webid] = user;
-            saveLocalAuthors();
-            // add workspaces
-            Solid.identity.getWorkspaces(webid, g).then((ws) => {
-                user.workspaces = ws;
-                // save to local storage and refresh page
-                saveLocalStorage();
-                if (reload) {
-                  window.location.reload();
-                }
+                // add self to authors list
+                authors[webid] = user;
+                saveLocalAuthors();
+                // add workspaces
+                Solid.identity.getWorkspaces(webid, g).then((ws) => {
+                    user.workspaces = ws;
+                    // save to local storage and refresh page
+                    saveLocalStorage();
+                    if (reload) {
+                      window.location.reload();
+                    }
+                }).catch((err) => {
+                    showError(err);
+                    // save to local storage and refresh page
+                    saveLocalStorage();
+                    if (reload) {
+                      window.location.reload();
+                    }
+                });
             }).catch((err) => {
-                showError(err);
-                // save to local storage and refresh page
-                saveLocalStorage();
-                if (reload) {
-                  window.location.reload();
-                }
+                throw(err);
             });
         });
     };
@@ -1376,7 +1375,7 @@ Plume = (function () {
     var togglePreview = function() {
         editor.togglePreview();
         var text = document.querySelector('.preview');
-        text.innerHTML = (text.innerHTML=="Preview")?"Edit":"Preview";
+        text.innerHTML = (text.innerHTML=="View")?"Edit":"View";
     };
 
     // check if user is among the owners list
@@ -1620,15 +1619,19 @@ Plume = (function () {
     // ----- INIT -----
     // Loading Plume config from browser storage, then from config.txt
     applyConfig();
-    var http = new XMLHttpRequest();
-    http.open('get', appURL + 'config.txt');
-    http.onreadystatechange = function() {
-        if (this.readyState === this.DONE) {
-            init(JSON.parse(this.response));
+    Solid.fetch(appURL + 'config.txt',{method:'GET'}).then((response) => {
+        if (response.ok) {
+            response.json().then((json) => {
+                init(json);
+            }).catch((err) => {
+                throw new Error('Invalid config.txt: ' + response.statusText);
+            });
+        } else {
+            throw new Error('Failed to load config.txt: ' + response.statusText);
         }
-    };
-    http.send();
-
+    }).catch((err) => {
+      console.log(err)
+    });
 
     // return public functions
     return {
