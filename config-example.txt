@@ -9,7 +9,7 @@
     "showSources": true,
     "cacheUnit": "days",
     "defaultPath": "public/posts",
-    "postsURL": "",
+    "postsURL": "https://localhost:8443/public/posts/",
     "postsElement": ".posts",
     "loadInBg": true
 }
