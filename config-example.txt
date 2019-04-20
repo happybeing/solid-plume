@@ -2,7 +2,7 @@
     "owners": [
         "https://localhost:8443/profile/card#me"
     ],
-    "title": "Plume (sac-smalinin)",
+    "title": "Plume (theWebalyst)",
     "tagline": "Light as a feather",
     "picture": "img/logo.svg",
     "fadeText": true,
