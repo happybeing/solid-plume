@@ -1376,7 +1376,7 @@ Plume = (function () {
     var togglePreview = function() {
         editor.togglePreview();
         var text = document.querySelector('.preview');
-        text.innerHTML = (text.innerHTML=="View")?"Edit":"View";
+        text.innerHTML = (text.innerHTML=="Preview")?"Edit":"Preview";
     };
 
     // check if user is among the owners list
