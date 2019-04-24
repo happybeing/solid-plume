@@ -628,7 +628,7 @@ Plume = (function () {
             if (post.url) insertMetadata('og:url', post.url)
             if (post.created) insertMetadata('article:published_time', post.created)
 // <meta property="og:description" content="Offering tour packages for individuals or groups.">
-            if (post.image) insertMetadata('og:image', post.image ? post.image : appURL + 'img/logo.svg')
+            insertMetadata('og:image', post.image ? post.image : appURL + 'img/logo.svg')
 
             // Visible metadata
             if (post.title) {
