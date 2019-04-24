@@ -560,17 +560,7 @@ Plume = (function () {
             return;
         }
 
-        // Update document title
-        if (posts[url] && posts[url].title) {
-            document.querySelector('title').innerHTML += ' - ' + posts[url].title;
-        }
-
-        // add last modified date
-        if (posts[url].modified && posts[url].modified != posts[url].created) {
-            var modDate = document.createElement('p');
-            modDate.innerHTML += ' <small class="grey">'+"Last updated "+formatDate(posts[url].modified, 'LLL')+'</small>';
-            article.querySelector('section').appendChild(modDate);
-        }
+        applyPageMetadata(article, posts[url])
 
         // append article
         viewer.appendChild(article);
@@ -599,7 +589,67 @@ Plume = (function () {
         }
         // append button list to viewer
         footer.appendChild(buttonList);
-    }
+    };
+
+    const metaClass = 'postMeta'
+    var applyPageMetadata = function(article, post) {
+        if (post) {
+            // post { uri, title, author, created, modified, body }
+            // post.author { webid, name, picture }
+
+            // Declare stuff
+            let head = document.querySelector('head')
+            head.setAttribute('prefix', 'schema: http://schema.org/ og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article# bibo: http://purl.org/ontology/bibo/ sioc: http://rdfs.org/sioc/ns# bio: http://purl.org/vocab/bio/0.1/ time: http://www.w3.org/2006/time#')
+            if (post.url) {
+              let resourceURL = post.url.replace(/^[^\:]+\:\/\/[^\/]+/, '')
+              head.setAttribute('resource', resourceURL)
+            }
+            head.setAttribute('typeof', 'schema:WebPage')
+
+            // Semantic metadata (RDFa, Schema.org, Open Graph etc.)
+            const postMetaTags = document.querySelectorAll('meta.' + metaClass)
+            while (postMetaTags.length > 0) { postMetaTags[0].parentElement().removeChild(tag) }
+
+            insertMetadata('og:type', 'article')
+            if (post.title) {
+                insertMetadata('og:title', post.title)
+                insertMetadata('dc:title', post.title)
+              }
+            if (post.author) {
+                insertMetadata('og:author', post.author)
+                insertMetadata('article:author', post.author)
+                let author = post[post.author]
+                if (author && author.twitter) {
+                    insertMetadata('twitter:card', 'summary')
+                    insertMetadata('twitter:site', author.twitter.handle)
+                    insertMetadata('twitter:creator', author.twitter.handle)
+                }
+            }
+            if (post.url) insertMetadata('og:url', post.url)
+            if (post.created) insertMetadata('article:published_time', post.created)
+// <meta property="og:description" content="Offering tour packages for individuals or groups.">
+            if (post.image) insertMetadata('og:image', post.image ? post.image : appURL + 'img/logo.svg')
+
+            // Visible metadata
+            if (post.title) {
+                document.querySelector('title').innerHTML += ' - ' + post.title;
+            }
+
+            if (post.modified && post.modified != post.created) {
+                var modDate = document.createElement('p');
+                modDate.innerHTML += ' <small class="grey">'+"Last updated "+formatDate(post.modified, 'LLL')+'</small>';
+                article.querySelector('section').appendChild(modDate);
+            }
+        }
+    };
+
+    var insertMetadata = function(property, content) {
+        let metaTag = document.createElement('meta')
+        metaTag.className = metaClass
+        metaTag.setAttribute('property', property)
+        metaTag.setAttribute('content', content)
+        document.querySelector('head').appendChild(metaTag)
+    };
 
     var showEditor = function(url) {
         if (!user.authenticated) {
