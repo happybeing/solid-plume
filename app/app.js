@@ -118,69 +118,70 @@ Plume = (function () {
         // set config params
         applyConfig(configData);
 
-    // Render the session state
-    solid.auth
-      .currentSession()
-      .then((session) => {
-         if (session) {
-           gotWebID(session.webId, false)
-         }
-         return session
-      })
-      .then((session) => {render(session)})
+        // Render the session state
+        solid.auth
+        .currentSession()
+        .then((session) => {
+             if (session) {
+                gotWebID(session.webId, false)
+             }
+             return session
+        })
+        .then((session) => {
+            render(session)
 
+            // try to load authors
+            loadLocalAuthors();
 
-        // try to load authors
-        loadLocalAuthors();
-
-        // Add online/offline events
-        Solid.status.onOffline(function(){
-            notify('info', "You are no longer connected to the internet.", 3000);
-        });
-        Solid.status.onOnline(function(){
-            notify('info', "And we're back!");
-        });
-        // Init growl-like notifications
-        window.addEventListener('load', function () {
-            Notification.requestPermission(function (status) {
-                // This allows to use Notification.permission with Chrome/Safari
-                if (Notification.permission !== status) {
-                    Notification.permission = status;
-                }
+            // Add online/offline events
+            Solid.status.onOffline(function(){
+                notify('info', "You are no longer connected to the internet.", 3000);
             });
-        });
+            Solid.status.onOnline(function(){
+                notify('info', "And we're back!");
+            });
+            // Init growl-like notifications
+            window.addEventListener('load', function () {
+                Notification.requestPermission(function (status) {
+                    // This allows to use Notification.permission with Chrome/Safari
+                    if (Notification.permission !== status) {
+                        Notification.permission = status;
+                    }
+                });
+            });
 
-        // basic app routes
-        if (queryVals['post'] && queryVals['post'].length > 0) {
-            var url = decodeURIComponent(queryVals['post']);
-            showViewer(url);
-            return;
-        } else if (queryVals['view'] && queryVals['view'].length > 0) {
-            // legacy [to be deprecated]
-            var url = decodeURIComponent(queryVals['view']);
-            showViewer(url);
-            return;
-        } else if (queryVals['edit'] && queryVals['edit'].length > 0) {
-            var url = decodeURIComponent(queryVals['edit']);
-            showEditor(url);
-            return;
-        } else if (queryVals['new'] !== undefined) {
-            clearPendingPost();
-            showEditor();
-            return;
-        } else if (queryVals['blog'] && queryVals['blog'].length > 0) {
-            config.loadInBg = false;
-            showBlog(queryVals['blog']);
-            return;
-        } else {
-            // Load posts or initialize post container
-            config.loadInBg = false;
-            if (config.postsURL && config.postsURL.length > 0) {
-                showBlog(config.postsURL);
+            // basic app routes
+            if (queryVals['post'] && queryVals['post'].length > 0) {
+                var url = decodeURIComponent(queryVals['post']);
+                showViewer(url);
+                return;
+            } else if (queryVals['view'] && queryVals['view'].length > 0) {
+                // legacy [to be deprecated]
+                var url = decodeURIComponent(queryVals['view']);
+                showViewer(url);
+                return;
+            } else if (queryVals['edit'] && queryVals['edit'].length > 0) {
+                var url = decodeURIComponent(queryVals['edit']);
+                showEditor(url);
+                return;
+            } else if (queryVals['new'] !== undefined) {
+                clearPendingPost();
+                showEditor();
+                return;
+            } else if (queryVals['blog'] && queryVals['blog'].length > 0) {
+                config.loadInBg = false;
+                showBlog(queryVals['blog']);
+                return;
             } else {
-                document.querySelector('.init').classList.remove('hidden');
+                // Load posts or initialize post container
+                config.loadInBg = false;
+                if (config.postsURL && config.postsURL.length > 0) {
+                    showBlog(config.postsURL);
+                } else {
+                    document.querySelector('.init').classList.remove('hidden');
+                }
             }
-        }
+        })
     };
 
     // Set default config values
@@ -371,39 +372,24 @@ Plume = (function () {
             user.date = Date.now();
             user.pim = profile.pim;
 
-            Solid.fetch(appURL + 'config.txt',{method:'GET'})
-            .then((response) => {
-                if (response.ok) {
-                    response.json().then((json) => {
-                        applyConfig(json);
-                    }).catch((err) => {
-                        throw new Error('Invalid config.txt: ' + response.statusText);
-                    });
-                } else {
-                    throw new Error('Failed to load config.txt: ' + response.statusText);
+            // add self to authors list
+            authors[webid] = user;
+            saveLocalAuthors();
+            // add workspaces
+            Solid.identity.getWorkspaces(webid, g).then((ws) => {
+                user.workspaces = ws;
+                // save to local storage and refresh page
+                saveLocalStorage();
+                if (reload) {
+                  window.location.reload();
                 }
-
-                // add self to authors list
-                authors[webid] = user;
-                saveLocalAuthors();
-                // add workspaces
-                Solid.identity.getWorkspaces(webid, g).then((ws) => {
-                    user.workspaces = ws;
-                    // save to local storage and refresh page
-                    saveLocalStorage();
-                    if (reload) {
-                      window.location.reload();
-                    }
-                }).catch((err) => {
-                    showError(err);
-                    // save to local storage and refresh page
-                    saveLocalStorage();
-                    if (reload) {
-                      window.location.reload();
-                    }
-                });
             }).catch((err) => {
-                throw(err);
+                showError(err);
+                // save to local storage and refresh page
+                saveLocalStorage();
+                if (reload) {
+                  window.location.reload();
+                }
             });
         });
     };
@@ -550,7 +536,7 @@ Plume = (function () {
     };
 
     var showViewer = function(url) {
-        window.history.pushState("", document.querySelector('title').value, window.location.pathname+"?post="+encodeURIComponent(url));
+        window.history.pushState("", document.querySelector('title'), window.location.pathname+"?post="+encodeURIComponent(url));
         // hide main page
         document.querySelector(config.postsElement).classList.add('hidden');
         var viewer = document.querySelector('.viewer');
@@ -682,7 +668,7 @@ Plume = (function () {
 
             document.querySelector('.publish').innerHTML = "Update";
             document.querySelector('.publish').setAttribute('onclick', 'Plume.publishPost(\''+url+'\')');
-            window.history.pushState("", document.querySelector('title').value, window.location.pathname+"?edit="+encodeURIComponent(url));
+            window.history.pushState("", document.querySelector('title'), window.location.pathname+"?edit="+encodeURIComponent(url));
         };
 
         document.querySelector('.posts').classList.add('hidden');
@@ -1480,7 +1466,7 @@ Plume = (function () {
         if (refresh) {
             showBlog(config.postsURL);
         } else {
-            window.history.pushState("", document.querySelector('title').value, window.location.pathname);
+            window.history.pushState("", document.querySelector('title'), window.location.pathname);
         }
     };
 
