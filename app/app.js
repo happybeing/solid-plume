@@ -807,12 +807,12 @@ Plume = (function () {
 
         const GRAPH = $rdf.Namespace(docURI);
         var g = new $rdf.graph();
-        g.add(GRAPH('#'), RDF('type'), SIOC('Post'));
-        g.add(GRAPH('#'), DCT('title'), $rdf.lit(post.title));
-        g.add(GRAPH('#'), SIOC('has_creator'), GRAPH('#author'));
-        g.add(GRAPH('#'), DCT('created'), $rdf.lit(post.created, '', XSD('datetime')));
-        g.add(GRAPH('#'), DCT('modified'), $rdf.lit(post.modified, '', XSD('datetime')));
-        g.add(GRAPH('#'), SIOC('content'), $rdf.lit(encodeHTML(post.body)));
+        g.add(GRAPH(), RDF('type'), SIOC('Post'));
+        g.add(GRAPH(), DCT('title'), $rdf.lit(post.title));
+        g.add(GRAPH(), SIOC('has_creator'), GRAPH('#author'));
+        g.add(GRAPH(), DCT('created'), $rdf.lit(post.created, '', XSD('datetime')));
+        g.add(GRAPH(), DCT('modified'), $rdf.lit(post.modified, '', XSD('datetime')));
+        g.add(GRAPH(), SIOC('content'), $rdf.lit(encodeHTML(post.body)));
 
         g.add(GRAPH('#author'), RDF('type'), SIOC('UserAccount'));
         g.add(GRAPH('#author'), SIOC('account_of'), $rdf.sym(post.author));
