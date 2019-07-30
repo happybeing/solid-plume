@@ -31,8 +31,6 @@ https://github.com/solid/
 
 */
 
-// const fetch = Safenetworkjs.protoFetch
-
 // Identity / WebID
 var Solid = Solid || {};
 Solid.fetch = fetch;
@@ -56,6 +54,10 @@ Solid.identity = (function(window) {
                 function(graph) {
                     // set WebID
                     var webid = graph.any($rdf.sym(url), FOAF('primaryTopic'));
+
+                    // primaryTopic is optional, so default webid to URL
+                    if (webid === undefined) webid = url
+
                     // find additional resources to load
                     var sameAs = graph.statementsMatching(webid, OWL('sameAs'), undefined);
                     var seeAlso = graph.statementsMatching(webid, OWL('seeAlso'), undefined);
@@ -68,6 +70,8 @@ Solid.identity = (function(window) {
                             return resolve(graph);
                         }
                     }
+                    if (toLoad === 0) resolve(graph);
+
                     // Load sameAs files
                     if (sameAs.length > 0) {
                         sameAs.forEach(function(same){
@@ -371,7 +375,7 @@ Solid.web = (function(window) {
                    }
         var promise = Solid.fetch(url, init)
                .then((resp) => {
-                  if (resp.status === 200) {
+                  if (resp.status === 200 || resp.status === 202 || resp.status === 204) {
                     return Promise.resolve(true)
                   } else {
                     return Promise.reject({status: resp.status, msg: resp.statusText})
