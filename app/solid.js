@@ -31,6 +31,15 @@ https://github.com/solid/
 
 */
 
+// Provide app info if hosted on SAFE Network
+if (solid.auth.safeJs !== undefined) {
+    solid.auth.setSafeAppInfo({
+      id: 'https://github.com/theWebalyst/solid-plume',
+      name: 'Plume blog',
+      vendor: '@dieu / @theWebalyst'
+    })
+}
+
 // Identity / WebID
 var Solid = Solid || {};
 Solid.fetch = fetch;
