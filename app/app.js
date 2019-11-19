@@ -61,7 +61,7 @@ Plume = (function () {
 
 
     // init markdown editor
-    var editor = new SimpleMDE({
+    var editor = new EasyMDE({
         status: false,
         spellChecker: false
     });
