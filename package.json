@@ -1,0 +1,23 @@
+{
+  "name": "solid-plume",
+  "version": "1.0.0",
+  "description": "<img src=\"https://deiu.github.io/solid-plume/img/logo.png\">",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scenaristeur/solid-plume.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/scenaristeur/solid-plume/issues"
+  },
+  "homepage": "https://github.com/scenaristeur/solid-plume#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
