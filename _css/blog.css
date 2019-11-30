@@ -366,8 +366,8 @@ a.editor-author, a.editor-author:visited {
     background: #129FEA;
     height: 25px;
     width: 25px;
-    -webkit-mask:  url(../img/logo.svg) no-repeat 50% 50%;
-    mask: url(../img/logo.svg) no-repeat 50% 50%;
+    -webkit-mask:  url(../_img/logo.svg) no-repeat 50% 50%;
+    mask: url(../_img/logo.svg) no-repeat 50% 50%;
 }
 .post-title {
     font-size: 1.7em!important;

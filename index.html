@@ -5,11 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plume</title>
-    <link rel="stylesheet" href="css/pure-min.css">
-    <link rel="stylesheet" href="css/grids-responsive-min.css">
-    <link rel="stylesheet" href="css/easymde.min.css">
-    <link rel="stylesheet" href="css/blog.css">
-    <link rel="shortcut icon" type="img/png" href="favicon.png">
+    <link rel="stylesheet" href="_css/pure-min.css">
+    <link rel="stylesheet" href="_css/grids-responsive-min.css">
+    <link rel="stylesheet" href="_css/easymde.min.css">
+    <link rel="stylesheet" href="_css/blog.css">
+    <link rel="shortcut icon" type="_img/png" href="favicon.png">
     <link rel="manifest" href="manifest.json">
 </head>
 
@@ -18,13 +18,14 @@
         <nav id="global-nav" aria-label="Main navigation">
           <ul>
             <li class="new hidden"><a href="?new">
-                <img src="img/logo-white.svg" alt="Edit post">New post</a>
+                <img src="_img/logo-white.svg" alt="Edit post">New post</a>
                 <h1 class="menu-separator"></h1>
             </li>
             <li class="login"><a href="#" onclick="Plume.login()">Author Login</a></li>
             <li class="logout hidden"><a href="#" onclick="Plume.logout()">Logout</a></li>
             <!-- <li class=""><a href="#" onclick="Plume.signup()">Signup</a></li> -->
-
+            <li class=""><a href="#" onclick="Plume.setBlog()">[my webId] plume</a></li>
+            <li class=""><a href="?blog=https://agora.solid.community/public/posts/" onclick="Plume.showBlog('?blog=https://agora.solid.community/public/posts/')">Agora's Plume</a></li>
           </ul>
         </nav>
         <button aria-controls="global-nav" aria-haspopup="true" tabindex="1" id="menu-button">
@@ -34,7 +35,7 @@
         </button>
 
            <a id="logged-href" href="" title=""  style="display:none" >
-             <img id="uid-icon" src="img/uid.png">
+             <img id="uid-icon" src="_img/uid.png">
            </a>
 
         <div id="main" class="main content pure-u-1 pure-u-md-3-5">
@@ -121,7 +122,7 @@
             <div class="footer">
                 <div class="pure-menu pure-menu-horizontal">
                     <ul>
-                        <li class="pure-menu-item"><a href="https://github.com/theWebalyst/solid-plume/" class="pure-menu-link" target="_blank">Powered by Plume <img class="plume-logo" src="img/logo.svg"></a></li>
+                        <li class="pure-menu-item"><a href="https://github.com/theWebalyst/solid-plume/" class="pure-menu-link" target="_blank">Powered by Plume <img class="plume-logo" src="_img/logo.svg"></a></li>
                     </ul>
                 </div>
             </div>
@@ -156,11 +157,11 @@
     </div>
 
 <!-- Local Javascript -->
-<script src="js/easymde.min.js"></script>
-<script src="js/moment.min.js"></script>
-<script src="js/dropdown.js"></script>
-<script src="js/solid-auth-client.bundle.js"></script>
-<script src="js/rdflib.min.js"></script>
+<script src="_js/easymde.min.js"></script>
+<script src="_js/moment.min.js"></script>
+<script src="_js/dropdown.js"></script>
+<script src="_js/solid-auth-client.bundle.js"></script>
+<script src="_js/rdflib.min.js"></script>
 <script src="app/solid.js"></script>
 <script src="app/app.js"></script>
 </body>

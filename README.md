@@ -11,6 +11,51 @@ Plume stores blog posts using Linked Data (RDF) to include *semantic information
 
 Plume uses [Markdown](https://en.wikipedia.org/wiki/Markdown) which makes it easy to write beautiful articles without learning a whole new editor.
 
+## Installing Plume locally
+installing Plume locally can be done with nodejs.
+```
+git clone https://github.com/scenaristeur/solid-plume.git
+cd solid-plume
+npm install
+node .
+
+```
+
+## switching between pods
+just use the "?blog=" parameter :
+° http://localhost:8443/?blog=https://smag0.solid.community/public/posts/
+or
+° http://localhost:8443/?blog=https://agora.solid.community/public/posts/
+
+
+
+## Deployement on Pod error
+There is a known error for the folder "img", "js" & "css" that are recognized by a solid server as files instead of folders
+so those folders have been renamed in _img, _js , _css to test.
+
+and .meta of pod folder is modified (rename index.html with solid-file-explorer, make the modif in pod databrowser, then rename the file in index.html)
+
+
+css:
+    a ~~cs:Resource,~~ ldp:BasicContainer, ldp:Container, ldp:Resource;
+    terms:modified "2019-11-29T22:53:19Z"^^XML:dateTime;
+    st:mtime 1575067999.241;
+    st:size 4096.
+...
+img:
+    a ~~oct:Resource,~~ ldp:BasicContainer, ldp:Container, ldp:Resource;
+    terms:modified "2019-11-29T22:53:19Z"^^XML:dateTime;
+    st:mtime 1575067999.781;
+    st:size 4096.
+...
+js:
+    a ~~j:Resource,~~ ldp:BasicContainer, ldp:Container, ldp:Resource;
+    terms:modified "2019-11-29T22:53:18Z"^^XML:dateTime;
+    st:mtime 1575067998.001;
+    st:size 4096.
+
+
+
 ## Deploying Plume
 
 Plume can be deployed on any web server, but the simplest way is to upload it to your Solid pod and serve it from there where it will also store the blog posts you create.

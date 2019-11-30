@@ -9,7 +9,7 @@ Plume = (function () {
          "owners": [],
          "title": "Plume",
          "tagline": "Light as a feather",
-         "picture": "img/logo.svg",
+         "picture": "_img/logo.svg",
          "fadeText": true,
          "showSources": true,
          "cacheUnit": "days",
@@ -104,7 +104,7 @@ Plume = (function () {
     var defaultUser = {
         name: "John Doe",
         webid: "https://example.org/user#me",
-        picture: "img/icon-blue.svg",
+        picture: "_img/icon-blue.svg",
         authenticated: false
     };
 
@@ -202,7 +202,7 @@ Plume = (function () {
             loadLocalStorage();
         }
 
-        document.querySelector('.blog-picture').src = config.picture || 'img/logo.svg';
+        document.querySelector('.blog-picture').src = config.picture || '_img/logo.svg';
         document.querySelector('.blog-title').innerHTML = config.title || 'Plume';
         document.querySelector('title').innerHTML = config.title || 'Plume';
         document.querySelector('.blog-tagline').innerHTML = config.tagline || 'Light as a feather';
@@ -223,6 +223,13 @@ Plume = (function () {
 
         config.loadInBg = true;
     };
+
+
+var setBlog = function(){
+  showBlog (user.pim+'/public/posts/')
+}
+
+
 
     // show a particular blog
     var showBlog = function(url) {
@@ -628,7 +635,7 @@ Plume = (function () {
             if (post.url) insertMetadata('og:url', post.url)
             if (post.created) insertMetadata('article:published_time', post.created)
 // <meta property="og:description" content="Offering tour packages for individuals or groups.">
-            insertMetadata('og:image', post.image ? post.image : appURL + 'img/logo.svg')
+            insertMetadata('og:image', post.image ? post.image : appURL + '_img/logo.svg')
 
             // Visible metadata
             if (post.title) {
@@ -1092,7 +1099,7 @@ Plume = (function () {
 
     var getAuthorByWebID = function(webid) {
         var name = 'Unknown';
-        var picture = 'img/icon-blue.svg';
+        var picture = '_img/icon-blue.svg';
         if (webid && webid.length > 0) {
             var author = authors[webid];
             if (author && author.name) {
@@ -1219,7 +1226,7 @@ Plume = (function () {
             edit.classList.add("action-button");
             edit.href = '?edit='+encodeURIComponent(post.url);
             edit.setAttribute('title', 'Edit post');
-            edit.innerHTML = '<img src="img/logo.svg" alt="Edit post">Edit';
+            edit.innerHTML = '<img src="_img/logo.svg" alt="Edit post">Edit';
             footer.appendChild(edit);
             // delete button
             var del = document.createElement('a');
@@ -1677,6 +1684,7 @@ Plume = (function () {
         posts: posts,
         login: login,
         logout: logout,
+        setBlog: setBlog,
         signup: signup,
         resetAll: resetAll,
         cancelPost: cancelPost,
