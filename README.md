@@ -17,14 +17,14 @@ Plume can be deployed on any web server, but the simplest way is to upload it to
 
 ### Deploy Plume to your pod
 
-To deploy Plume on a Solid pod, see the step-by-step guide online at [Plume Deployment Guide](https://thewebalyst.solid.community/plume/?post=https%3A%2F%2Fthewebalyst.solid.community%2Fpublic%2Fposts%2F%2F1555171264494-how-to-deploy-plume-blog-on-your-solid-pod.ttl)
+To deploy Plume on a Solid pod, see the step-by-step guide online at [Plume Deployment Guide](https://thewebalyst.solidcommunity.net/plume/?post=https%3A%2F%2Fthewebalyst.solidcommunity.net%2Fpublic%2Fposts%2F%2F1555171264494-how-to-deploy-plume-blog-on-your-solid-pod.ttl)
 
-You can try creating a Plume blog using a free Solid pod service such as [https://solid.community](https://solid.community), [https://databox.me](https://databox.me), or [https://www.inrupt.net/](https://www.inrupt.net/).
+You can try creating a Plume blog using a free Solid pod service such as [https://solidcommunity.net](https://solidcommunity.net) or [https://www.inrupt.net/](https://www.inrupt.net/).
 
 ## Configuration
 
 ### Configuring Plume
-Plume does not support dynamic configuration of data spaces, which means you will have to either run it on your own Web server or manually upload it to your Solid pod as described in the [Plume Deployment Guide](https://thewebalyst.solid.community/plume/?post=https%3A%2F%2Fthewebalyst.solid.community%2Fpublic%2Fposts%2F%2F1555171264494-how-to-deploy-plume-blog-on-your-solid-pod.ttl).
+Plume does not support dynamic configuration of data spaces, which means you will have to either run it on your own Web server or manually upload it to your Solid pod as described in the [Plume Deployment Guide](https://thewebalyst.solidcommunity.net/plume/?post=https%3A%2F%2Fthewebalyst.solidcommunity.net%2Fpublic%2Fposts%2F%2F1555171264494-how-to-deploy-plume-blog-on-your-solid-pod.ttl).
 
 The guide explains how to configure Plume using a file called 'config.txt' which is used to identify yourself as pod owner (by your pod WebID). This file also allows you to configure where posts are to be stored, the title and strapline for your blog, and so on. All these settings can be changed at any time by editing 'config.txt'.
 
@@ -48,7 +48,7 @@ The following is an example which is included with Plume as 'config-example.txt'
 }
 ```
 
-The minimum customisation needed will be to replace the two instances of '`https://localhost:8443/`' with the first part of your pod storage address (e.g. with '`https://thewebalyst.solid.community/`').
+The minimum customisation needed will be to replace the two instances of '`https://localhost:8443/`' with the first part of your pod storage address (e.g. with '`https://thewebalyst.solidcommunity.net/`').
 
 The meanings of 'config.txt' parameters are as follows:
 
